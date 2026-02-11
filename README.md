@@ -1,4 +1,4 @@
-# Seedance Skills
+# AIVidPipeline Skills
 
 A collection of AI agent skills for end-to-end AI video production. From topic ideation to publishing, covering the complete video creation pipeline.
 
@@ -8,10 +8,10 @@ Built for [Claude Code](https://claude.ai), [OpenClaw](https://openclaw.ai), [Co
 
 ```bash
 # Install all skills
-npx skills add yangyang/seedance-skills
+npx skills add yyforever/aividpipeline-skills
 
 # Install specific skill
-npx skills add yangyang/seedance-skills --skill seedance-video
+npx skills add yyforever/aividpipeline-skills --skill seedance-video
 ```
 
 ## Available Skills
