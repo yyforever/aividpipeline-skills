@@ -1,90 +1,135 @@
 ---
 name: aivp-publish
-description: >
-  Optimize metadata, generate thumbnails, and publish videos to multiple platforms.
-  Use when user requests "publish video", "upload to YouTube", "post to TikTok",
-  "create thumbnail", "SEO optimize", "video metadata", "repurpose video",
-  "multi-platform publish", "generate tags", "video description",
-  or needs to prepare and distribute video content across platforms
-  with optimized titles, descriptions, tags, and thumbnails.
+description: Optimize metadata, generate thumbnails, and prepare videos for publishing to multiple platforms. Use when the user requests "Publish video", "Upload to YouTube", "Create thumbnail", "SEO optimize", or similar publishing tasks.
+metadata:
+  author: aividpipeline
+  version: "0.1.0"
+  tags: publish, youtube, tiktok, thumbnail, seo, metadata
 ---
 
-# AIVidPipeline Publish
+# AIVP Publish — Metadata, Thumbnails & Publishing
 
-Metadata optimization, thumbnail generation, and multi-platform distribution.
+Prepare videos for publishing: generate thumbnails, optimize titles/descriptions/tags for each platform, and export platform-specific formats.
 
-<!-- TODO: Implement all sections below -->
+## When to Use
 
-## References
+- After `aivp-review` passes
+- User wants to publish or prepare for upload
+- User needs thumbnails or SEO-optimized metadata
 
-- [Platform Specs](references/platforms.md) — Format requirements per platform
+## Platform Specs
+
+| Platform | Aspect Ratio | Max Duration | Max Size | Resolution |
+|----------|:------------:|:------------:|:--------:|:----------:|
+| YouTube | 16:9 | 12h | 256GB | 4K |
+| YouTube Shorts | 9:16 | 60s | 256GB | 1080x1920 |
+| TikTok | 9:16 | 10min | 4GB | 1080x1920 |
+| Instagram Reels | 9:16 | 90s | 4GB | 1080x1920 |
+| Instagram Feed | 1:1 or 4:5 | 60s | 4GB | 1080x1080 |
+| Twitter/X | 16:9 | 2:20 | 512MB | 1920x1080 |
 
 ## Scripts
 
 | Script | Purpose |
 |--------|---------|
-| `scripts/metadata.sh` | Generate SEO-optimized title, description, tags |
-| `scripts/thumbnail.sh` | Generate video thumbnail |
-| `scripts/repurpose.sh` | Reformat video for different platforms |
+| `thumbnail.sh` | Extract or generate thumbnail from video |
+| `metadata.sh` | Generate platform-optimized metadata |
+| `reformat.sh` | Convert video to platform-specific format |
 
-## Metadata Generation
+### Generate Thumbnail
 
-<!-- TODO: Implement metadata generation -->
+```bash
+# Extract best frame
+bash scripts/thumbnail.sh \
+  --video "output/final.mp4" \
+  --output "output/thumbnail.jpg"
 
-### Title Optimization
-- Hook pattern: Number + Adjective + Keyword + Promise
-- A/B test variants (generate 3-5 options)
-- Platform-specific length (YouTube 60 chars, TikTok shorter)
+# Extract at specific timestamp
+bash scripts/thumbnail.sh \
+  --video "output/final.mp4" \
+  --timestamp 15 \
+  --output "output/thumbnail.jpg"
+```
 
-### Description
-- First 2 lines visible above fold — front-load keywords
-- Structured sections: summary, timestamps, links, hashtags
-- Platform-specific formatting
+### Generate Metadata
 
-### Tags
-- Mix of broad + specific + long-tail keywords
-- Competitor tag analysis
-
-## Thumbnail Generation
-
-<!-- TODO: Implement thumbnail generation -->
-<!-- TODO: Integrate with aivp-image for AI thumbnail creation -->
-
-- High contrast, readable at small sizes
-- Face + emotion when applicable
-- Text overlay (3-5 words max)
-- Platform-specific dimensions (YouTube 1280x720, etc.)
-
-## Multi-platform Repurposing
-
-<!-- TODO: Implement repurpose.sh -->
-
-| Platform | Aspect | Max Duration | Notes |
-|----------|--------|-------------|-------|
-| YouTube | 16:9 | 12h | Chapters, cards, end screens |
-| YouTube Shorts | 9:16 | 60s | Vertical, loop-friendly |
-| TikTok | 9:16 | 10min | Trending sounds, hashtags |
-| Instagram Reels | 9:16 | 90s | Cover frame selection |
-| Bilibili | 16:9 | Varies | Chinese metadata |
-
-## Output Format
+This is LLM-driven. The agent generates optimized metadata:
 
 ```json
 {
-  "metadata": {
-    "title": "...",
-    "title_variants": ["...", "..."],
-    "description": "...",
-    "tags": ["...", "..."],
-    "hashtags": ["...", "..."],
-    "thumbnail_path": "...",
-    "category": "...",
-    "language": "..."
+  "youtube": {
+    "title": "5 Morning Habits That Changed My Life (Science-Backed)",
+    "description": "Discover the morning routines used by the world's most successful people...\n\n⏰ Timestamps:\n0:00 Introduction\n0:15 Habit 1: Wake Up Early\n...\n\n🔔 Subscribe for more!",
+    "tags": ["morning routine", "habits", "productivity", "success"],
+    "category": "Education",
+    "visibility": "public"
   },
-  "platform_variants": {
-    "youtube": { "file": "...", "metadata": {} },
-    "tiktok": { "file": "...", "metadata": {} },
-    "reels": { "file": "...", "metadata": {} }
+  "tiktok": {
+    "caption": "5 morning habits that actually work 🌅 #morningroutine #productivity #habits #success",
+    "sounds": []
+  },
+  "shorts": {
+    "title": "This morning habit changed everything #shorts",
+    "description": "#morningroutine #productivity"
   }
 }
 ```
+
+### Reformat for Platform
+
+```bash
+# Convert to vertical for TikTok/Shorts
+bash scripts/reformat.sh \
+  --input "output/final.mp4" \
+  --platform "tiktok" \
+  --output "output/final_tiktok.mp4"
+
+# Square for Instagram
+bash scripts/reformat.sh \
+  --input "output/final.mp4" \
+  --platform "instagram" \
+  --output "output/final_ig.mp4"
+```
+
+## SEO Tips
+
+### YouTube Title
+- Include primary keyword early
+- Use numbers ("5 Habits", "Top 10")
+- Add emotional trigger ("That Changed My Life")
+- Keep under 60 characters
+
+### YouTube Description
+- First 2 lines are critical (shown in search)
+- Include timestamps
+- Add links and CTA
+- Include keywords naturally
+
+### Tags
+- Primary keyword first
+- Mix broad and specific
+- 5-15 tags total
+- Include common misspellings
+
+## Integration with AIVP Pipeline
+
+```
+aivp-review (passed) → aivp-publish → aivp-ideation (analytics feedback)
+```
+
+### Project Directory Convention
+
+```
+project/
+├── output/
+│   ├── final.mp4
+│   ├── final_shorts.mp4       ← vertical cut
+│   ├── final_tiktok.mp4       ← TikTok format
+│   └── thumbnail.jpg
+└── publish/
+    └── metadata.json          ← per-platform metadata
+```
+
+## References
+
+- [references/platforms.md](references/platforms.md) — Detailed platform specs and best practices

@@ -1,82 +1,281 @@
 ---
 name: aivp-edit
-description: >
-  Edit and compose video using ffmpeg for AI video production.
-  Use when user requests "edit video", "cut video", "merge clips",
-  "add subtitles", "add music to video", "trim video", "concat videos",
-  "video transitions", "burn subtitles", "overlay audio",
-  or needs to perform any ffmpeg-based video editing operations
-  including cutting, merging, subtitle burning, and audio mixing.
+description: Edit and compose video using FFmpeg for AI video production. Use when the user requests "Combine clips", "Add music to video", "Add subtitles", "Trim video", "Concat videos", "Adjust speed", or similar video editing tasks.
+metadata:
+  author: aividpipeline
+  version: "0.1.0"
+  tags: ffmpeg, video-editing, compose, subtitle, concat, trim
 ---
 
-# AIVidPipeline Edit
+# AIVP Edit — FFmpeg Video Editing & Composition
 
-Video editing with ffmpeg — cutting, merging, transitions, subtitles, and audio mixing.
+Compose final videos from clips, audio, and subtitles using FFmpeg. This skill handles the "post-production" stage: concatenation, audio mixing, subtitle burning, transitions, and export.
 
-<!-- TODO: Implement all sections below -->
+## Prerequisites
 
-## References
-
-- [FFmpeg Recipes](references/ffmpeg-recipes.md) — Common ffmpeg command patterns
+- FFmpeg installed (`brew install ffmpeg` / `apt install ffmpeg`)
 
 ## Scripts
 
 | Script | Purpose |
 |--------|---------|
-| `scripts/cut.sh` | Cut/trim video segments |
-| `scripts/merge.sh` | Concatenate multiple clips |
-| `scripts/subtitle.sh` | Burn SRT subtitles into video |
+| `concat.sh` | Concatenate multiple clips into one |
+| `mix-audio.sh` | Add voiceover and/or BGM to video |
+| `add-subtitles.sh` | Burn subtitles into video |
+| `trim.sh` | Trim video by start/end time |
+| `adjust-speed.sh` | Speed up or slow down video |
+| `export.sh` | Full pipeline: concat + audio + subtitles |
 
-## Operations
-
-### Cut / Trim
-
-<!-- TODO: Implement cut script -->
-
-```bash
-# Cut from 00:01:30 to 00:03:00
-ffmpeg -i input.mp4 -ss 00:01:30 -to 00:03:00 -c:v libx264 -c:a aac output.mp4
-```
-
-### Merge / Concatenate
-
-<!-- TODO: Implement merge script with transition support -->
+## Concatenate Clips
 
 ```bash
-# Concatenate clips
-ffmpeg -f concat -safe 0 -i filelist.txt -c copy output.mp4
+bash scripts/concat.sh [options]
 ```
 
-### Subtitle Burning
+### Basic Usage
 
-<!-- TODO: Implement subtitle script with styling options -->
+```bash
+# Concat clips in order
+bash scripts/concat.sh \
+  --input "clips/scene_01.mp4" \
+  --input "clips/scene_02.mp4" \
+  --input "clips/scene_03.mp4" \
+  --output "output/combined.mp4"
+
+# From a file list
+bash scripts/concat.sh \
+  --list "clips/filelist.txt" \
+  --output "output/combined.mp4"
+```
+
+`filelist.txt` format:
+```
+file 'scene_01.mp4'
+file 'scene_02.mp4'
+file 'scene_03.mp4'
+```
+
+### Arguments
+
+| Argument | Description |
+|----------|-------------|
+| `--input`, `-i` | Input file (repeatable) |
+| `--list` | FFmpeg concat file list |
+| `--output`, `-o` | Output file path (required) |
+| `--transition` | `none`, `crossfade` (default: none) |
+| `--crossfade-duration` | Crossfade duration in seconds (default: 0.5) |
+
+## Mix Audio
+
+```bash
+bash scripts/mix-audio.sh [options]
+```
+
+### Basic Usage
+
+```bash
+# Add voiceover
+bash scripts/mix-audio.sh \
+  --video "output/combined.mp4" \
+  --voiceover "audio/voiceover.mp3" \
+  --output "output/with_vo.mp4"
+
+# Add BGM (lower volume)
+bash scripts/mix-audio.sh \
+  --video "output/with_vo.mp4" \
+  --bgm "audio/bgm.mp3" \
+  --bgm-volume 0.15 \
+  --output "output/with_bgm.mp4"
+
+# Both at once
+bash scripts/mix-audio.sh \
+  --video "output/combined.mp4" \
+  --voiceover "audio/voiceover.mp3" \
+  --bgm "audio/bgm.mp3" \
+  --bgm-volume 0.15 \
+  --output "output/final.mp4"
+```
+
+### Arguments
+
+| Argument | Description | Default |
+|----------|-------------|---------|
+| `--video` | Input video (required) | - |
+| `--voiceover` | Voiceover audio file | - |
+| `--bgm` | Background music file | - |
+| `--bgm-volume` | BGM volume (0.0 - 1.0) | 0.15 |
+| `--vo-volume` | Voiceover volume | 1.0 |
+| `--output`, `-o` | Output file (required) | - |
+
+## Add Subtitles
+
+```bash
+bash scripts/add-subtitles.sh [options]
+```
+
+### Basic Usage
 
 ```bash
 # Burn SRT subtitles
-ffmpeg -i input.mp4 -vf "subtitles=subs.srt:force_style='FontSize=24'" output.mp4
+bash scripts/add-subtitles.sh \
+  --video "output/final.mp4" \
+  --srt "subtitles/transcript.srt" \
+  --output "output/with_subs.mp4"
+
+# Custom style
+bash scripts/add-subtitles.sh \
+  --video "output/final.mp4" \
+  --srt "subtitles/transcript.srt" \
+  --font-size 24 \
+  --font-color "white" \
+  --outline-color "black" \
+  --position "bottom" \
+  --output "output/with_subs.mp4"
 ```
 
-### Audio Mixing
+### Arguments
 
-<!-- TODO: Implement audio overlay (voiceover + BGM + video) -->
+| Argument | Description | Default |
+|----------|-------------|---------|
+| `--video` | Input video (required) | - |
+| `--srt` | SRT subtitle file (required) | - |
+| `--font-size` | Font size | 24 |
+| `--font-color` | Font color | white |
+| `--outline-color` | Outline color | black |
+| `--position` | `top`, `center`, `bottom` | bottom |
+| `--output`, `-o` | Output file (required) | - |
+
+## Trim Video
 
 ```bash
-# Merge audio and video
-ffmpeg -i video.mp4 -i voiceover.mp3 -i bgm.mp3 \
-  -filter_complex "[1:a]volume=1.0[vo];[2:a]volume=0.3[bg];[vo][bg]amix=inputs=2[a]" \
-  -map 0:v -map "[a]" -c:v copy output.mp4
+# Trim from 5s to 15s
+bash scripts/trim.sh \
+  --input "video.mp4" \
+  --start 5 \
+  --end 15 \
+  --output "trimmed.mp4"
+
+# Trim first 3 seconds off
+bash scripts/trim.sh \
+  --input "video.mp4" \
+  --start 3 \
+  --output "trimmed.mp4"
 ```
 
-### Multi-platform Resize
-
-<!-- TODO: Implement aspect ratio cropping -->
+## Adjust Speed
 
 ```bash
-# 16:9 → 9:16 (center crop for Shorts/Reels)
-ffmpeg -i input.mp4 -vf "crop=ih*9/16:ih" output_vertical.mp4
+# 2x speed
+bash scripts/adjust-speed.sh \
+  --input "video.mp4" \
+  --speed 2.0 \
+  --output "fast.mp4"
+
+# Slow motion (0.5x)
+bash scripts/adjust-speed.sh \
+  --input "video.mp4" \
+  --speed 0.5 \
+  --output "slowmo.mp4"
 ```
 
-## Prerequisites
+## Full Export Pipeline
 
-- `ffmpeg` and `ffprobe` installed
-- Verify: `ffmpeg -version`
+```bash
+bash scripts/export.sh [options]
+```
+
+One command to do everything: concat → mix audio → burn subtitles → export.
+
+```bash
+bash scripts/export.sh \
+  --clips-dir "clips/" \
+  --voiceover "audio/voiceover.mp3" \
+  --bgm "audio/bgm.mp3" \
+  --bgm-volume 0.15 \
+  --srt "subtitles/transcript.srt" \
+  --output "output/final_video.mp4" \
+  --resolution "1920x1080" \
+  --fps 30
+```
+
+### Arguments
+
+| Argument | Description | Default |
+|----------|-------------|---------|
+| `--clips-dir` | Directory of clips (sorted by name) | - |
+| `--clips-list` | Explicit file list | - |
+| `--voiceover` | Voiceover file | - |
+| `--bgm` | Background music | - |
+| `--bgm-volume` | BGM volume | 0.15 |
+| `--srt` | Subtitle file | - |
+| `--output`, `-o` | Final output path (required) | - |
+| `--resolution` | Output resolution | source |
+| `--fps` | Output frame rate | source |
+| `--codec` | Video codec | libx264 |
+| `--quality` | CRF value (lower = better) | 23 |
+
+## Integration with AIVP Pipeline
+
+```
+aivp-video (clips) + aivp-audio (VO + BGM) → aivp-edit → aivp-review
+```
+
+### Project Directory Convention
+
+```
+project/
+├── clips/
+│   ├── scene_01.mp4
+│   ├── scene_02.mp4
+│   └── scene_03.mp4
+├── audio/
+│   ├── voiceover.mp3
+│   └── bgm.mp3
+├── subtitles/
+│   └── transcript.srt
+└── output/
+    ├── combined.mp4          ← concat only
+    ├── with_audio.mp4        ← + audio
+    └── final.mp4             ← + subtitles (upload this)
+```
+
+## Common FFmpeg Recipes
+
+### Crossfade Transition
+```bash
+ffmpeg -i clip1.mp4 -i clip2.mp4 \
+  -filter_complex "xfade=transition=fade:duration=0.5:offset=4" \
+  -y output.mp4
+```
+
+### Picture-in-Picture
+```bash
+ffmpeg -i main.mp4 -i overlay.mp4 \
+  -filter_complex "[1:v]scale=320:180[pip];[0:v][pip]overlay=W-w-10:H-h-10" \
+  -y output.mp4
+```
+
+### Add Fade In/Out
+```bash
+ffmpeg -i input.mp4 \
+  -vf "fade=t=in:st=0:d=1,fade=t=out:st=9:d=1" \
+  -y output.mp4
+```
+
+### Scale to 1080p
+```bash
+ffmpeg -i input.mp4 \
+  -vf "scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2" \
+  -y output.mp4
+```
+
+## Troubleshooting
+
+### Clips Have Different Resolutions
+Scale all clips to same resolution before concat, or use `--resolution` in `export.sh`.
+
+### Audio Out of Sync
+Ensure voiceover duration matches video. Use `trim.sh` or adjust with `--start` offset.
+
+### Large Output File
+Lower quality: `--quality 28` or use `--codec libx265` for better compression.
