@@ -1,5 +1,5 @@
 ---
-name: seedance-publish
+name: aivp-publish
 description: >
   Optimize metadata, generate thumbnails, and publish videos to multiple platforms.
   Use when user requests "publish video", "upload to YouTube", "post to TikTok",
@@ -9,7 +9,7 @@ description: >
   with optimized titles, descriptions, tags, and thumbnails.
 ---
 
-# Seedance Publish
+# AIVidPipeline Publish
 
 Metadata optimization, thumbnail generation, and multi-platform distribution.
 
@@ -48,7 +48,7 @@ Metadata optimization, thumbnail generation, and multi-platform distribution.
 ## Thumbnail Generation
 
 <!-- TODO: Implement thumbnail generation -->
-<!-- TODO: Integrate with seedance-image for AI thumbnail creation -->
+<!-- TODO: Integrate with aivp-image for AI thumbnail creation -->
 
 - High contrast, readable at small sizes
 - Face + emotion when applicable

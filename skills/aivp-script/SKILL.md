@@ -1,5 +1,5 @@
 ---
-name: seedance-script
+name: aivp-script
 description: >
   Generate structured video scripts for AI video production.
   Use when user requests "write a script", "video script", "screenplay",
@@ -9,7 +9,7 @@ description: >
   tutorial/how-to, narrative/story, and documentary styles.
 ---
 
-# Seedance Script
+# AIVidPipeline Script
 
 Generate structured video scripts with proper formatting for AI video production.
 

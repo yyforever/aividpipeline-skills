@@ -1,5 +1,5 @@
 ---
-name: seedance-ideation
+name: aivp-ideation
 description: >
   Topic ideation and performance analytics for AI video production.
   Use when user requests "find video topics", "trending topics", "competitor analysis",
@@ -9,7 +9,7 @@ description: >
   discover → score → produce → measure → learn → discover.
 ---
 
-# Seedance Ideation
+# AIVidPipeline Ideation
 
 Topic research, scoring, and post-publish analytics for AI video production.
 

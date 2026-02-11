@@ -1,5 +1,5 @@
 ---
-name: seedance-image
+name: aivp-image
 description: >
   Generate keyframe images and character reference sheets for AI video production.
   Use when user requests "generate keyframe", "character reference", "reference image",
@@ -9,7 +9,7 @@ description: >
   character consistency techniques (reference images, LoRA, prompt anchoring).
 ---
 
-# Seedance Image
+# AIVidPipeline Image
 
 Generate keyframe images and character references for AI video production.
 

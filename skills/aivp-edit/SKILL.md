@@ -1,5 +1,5 @@
 ---
-name: seedance-edit
+name: aivp-edit
 description: >
   Edit and compose video using ffmpeg for AI video production.
   Use when user requests "edit video", "cut video", "merge clips",
@@ -9,7 +9,7 @@ description: >
   including cutting, merging, subtitle burning, and audio mixing.
 ---
 
-# Seedance Edit
+# AIVidPipeline Edit
 
 Video editing with ffmpeg — cutting, merging, transitions, subtitles, and audio mixing.
 

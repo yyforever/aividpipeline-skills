@@ -1,5 +1,5 @@
 ---
-name: seedance-review
+name: aivp-review
 description: >
   Automated quality review and content safety checks for AI video production.
   Use when user requests "review video", "quality check", "QA check",
@@ -8,7 +8,7 @@ description: >
   content safety, and brand compliance before publishing.
 ---
 
-# Seedance Review
+# AIVidPipeline Review
 
 Automated quality checks and content review before publishing.
 

@@ -1,5 +1,5 @@
 ---
-name: seedance-video
+name: aivp-video
 description: >
   Generate video clips using AI video models for video production.
   Use when user requests "generate video", "create video clip", "text to video",
@@ -8,7 +8,7 @@ description: >
   using Seedance, Kling, Sora, Veo, or other video generation models.
 ---
 
-# Seedance Video
+# AIVidPipeline Video
 
 Generate video clips from text or images using state-of-the-art AI video models.
 
@@ -49,7 +49,7 @@ Generate video clips from text or images using state-of-the-art AI video models.
 4. Download and save with shot ID
 
 ### Image-to-Video
-1. Take keyframe image from seedance-image output
+1. Take keyframe image from aivp-image output
 2. Add motion prompt from storyboard
 3. Submit to queue with reference image
 4. Validate output matches intended motion

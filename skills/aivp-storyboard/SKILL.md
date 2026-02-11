@@ -1,5 +1,5 @@
 ---
-name: seedance-storyboard
+name: aivp-storyboard
 description: >
   Design visual storyboards and shot lists for AI video production.
   Use when user requests "storyboard", "shot list", "shot planning",
@@ -8,7 +8,7 @@ description: >
   with camera language, composition, and timing.
 ---
 
-# Seedance Storyboard
+# AIVidPipeline Storyboard
 
 Convert scripts into structured shot lists with professional camera language.
 

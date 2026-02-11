@@ -1,5 +1,5 @@
 ---
-name: seedance-audio
+name: aivp-audio
 description: >
   Generate voiceover, background music, and sound effects for AI video production.
   Use when user requests "voiceover", "narration", "text to speech", "TTS",
@@ -8,7 +8,7 @@ description: >
   voice narration, music, and SFX.
 ---
 
-# Seedance Audio
+# AIVidPipeline Audio
 
 Generate voiceover, BGM, and sound effects for AI video production.
 
