@@ -1,121 +1,135 @@
 ---
 name: aivp-script
-description: Generate structured video scripts for AI video production. Use when the user requests "Write a video script", "Create narration", "Script for video", "Write dialogue", or similar script writing tasks.
-metadata:
-  author: aividpipeline
-  version: "0.1.0"
-  tags: script, writing, narration, dialogue, storytelling
+description: Generate video scripts with dual output — narrative screenplay and AI-ready technical prompts. Optimized for micro-drama and short-form video. Activate on "write a script", "create video script", "script for video", "write dialogue", "write episode", or any scriptwriting request for video production.
 ---
 
-# AIVP Script — Video Script Generation
+# AIVP Script — Dual-Layer Video Script Generation
 
-Generate structured video scripts with scene breakdowns, narration text, and visual directions. Output is optimized for downstream use by `aivp-storyboard` and `aivp-audio`.
+Generate scripts with two synchronized outputs:
+- **Narrative layer** — human-readable screenplay (dialogue, emotion, pacing)
+- **Technical layer** — per-shot prompts ready for AI video generation (Kling 3.0 / Seedance 2.0 format)
 
-## When to Use
+This is an iterative process: script-v1 → discuss → revise → script-final.
 
-- User wants to create a video and needs a script
-- User has a topic/idea and wants structured content
-- User needs narration text for voiceover generation
-
-## Output Format
-
-Scripts are output as structured JSON for machine consumption:
-
-```json
-{
-  "title": "5 Morning Habits of Successful People",
-  "duration_estimate": "3:00",
-  "style": "documentary",
-  "scenes": [
-    {
-      "scene_id": "01",
-      "duration": "15s",
-      "narration": "Every morning, before the world wakes up, the most successful people have already started their day.",
-      "visual_direction": "Sunrise timelapse over city skyline, warm golden light",
-      "mood": "inspiring",
-      "transition": "fade_in"
-    },
-    {
-      "scene_id": "02",
-      "duration": "30s",
-      "narration": "The first habit is waking up early. Studies show that 90% of executives wake before 6 AM.",
-      "visual_direction": "Person stretching in bed, alarm clock showing 5:30 AM, soft morning light",
-      "mood": "calm",
-      "transition": "cut"
-    }
-  ],
-  "metadata": {
-    "target_audience": "young professionals",
-    "tone": "motivational",
-    "cta": "Subscribe for more productivity tips"
-  }
-}
-```
-
-## Script Styles
-
-| Style | Description | Best For |
-|-------|-------------|----------|
-| `documentary` | Informative narration with B-roll directions | Educational, explainer |
-| `listicle` | Numbered sections ("Top 5...") | Social media, YouTube |
-| `tutorial` | Step-by-step instructions | How-to content |
-| `story` | Narrative arc (setup → conflict → resolution) | Brand stories, shorts |
-| `commercial` | Short, punchy, CTA-focused | Ads, product demos |
-| `interview` | Q&A format with multiple speakers | Podcasts, testimonials |
-
-## Usage
-
-This skill is primarily LLM-driven (no shell scripts). The agent generates the script directly.
-
-### Prompt Template
-
-When generating a script, follow this structure:
+## Core Process
 
 ```
-Generate a video script with these parameters:
-- Topic: [user's topic]
-- Duration: [target length]
-- Style: [documentary/listicle/tutorial/story/commercial]
-- Audience: [target audience]
-- Tone: [professional/casual/funny/inspiring]
-
-Output as JSON following the aivp-script schema.
-Each scene should include:
-- scene_id (sequential, zero-padded)
-- duration (estimated)
-- narration (exact text for voiceover)
-- visual_direction (what the viewer sees — detailed enough for image generation)
-- mood (emotional tone of the scene)
-- transition (cut/fade_in/fade_out/crossfade)
+Read brief-final.md (from aivp-ideation)
+     ↓
+Create plan.md (from assets/plan-template.md)
+     ↓
+ ┌─ Round N ────────────────────────────────┐
+ │  ① Define/refine characters               │
+ │  ② Write narrative script                  │
+ │  ③ Generate technical prompts per shot     │
+ │  ④ Run quality checks                      │
+ │  ⑤ Present to user with revision notes     │
+ │  ⑥ Update plan.md                          │
+ └──── revisions needed → Round N+1 ──────────┘
+     ↓ approved
+ Save script-final.md + prompts-final.md + characters/ → done
 ```
 
-## Integration with AIVP Pipeline
+## Workflow
+
+### Setup
+
+1. **Read input** — Load `ideation/brief-final.md` for direction, tone, genre, audience
+2. **Create `script/plan.md`** — Copy `assets/plan-template.md`
+3. **Read format references** — Load `references/micro-drama-structure.md` for genre-specific rules
+
+### Step 1: Character Definition
+
+Before writing any scenes, define all characters. Read `references/character-sheet.md` for template.
+
+Save each character to `script/characters/{name}.md`:
+- Visual appearance (hair, build, clothing style, distinguishing mark)
+- Voice profile (tone, accent, speech pattern)
+- Core conflict (4 words: "vengeful bride vs cheating fiancé")
+- Visual "tell" (ring, scar, twitch — for instant recognition)
+
+Characters are reused by downstream skills (aivp-image, aivp-video) for consistency.
+
+### Step 2: Narrative Script
+
+Write the human-readable screenplay. Read `references/script-template.md` for structure.
+
+Key rules:
+- Each scene has: location, time, characters present, dialogue, action, emotional beat
+- Dialogue must advance plot OR reveal character (ideally both)
+- Mark emotional pacing: 🔴 hook / 🟡 build / 🟢 peak / 🔵 release
+- End every episode/segment with a cliffhanger
+
+### Step 3: Technical Prompts
+
+For each scene in the narrative, generate AI video model prompts. Read `references/prompt-formats.md` for model-specific syntax.
+
+Each shot prompt includes:
+- Shot type + framing
+- Subject action + motion description
+- Emotional state + facial expression
+- Lighting / atmosphere
+- Camera movement (explicit, not vague)
+- Duration
+- Audio/dialogue tags (if native audio)
+- Character reference tags
+
+### Step 4: Quality Checks
+
+Read `references/quality-checks.md` and verify:
+- [ ] Hook window (first 15 seconds grabs attention)
+- [ ] Emotional pacing (spike every 40-60 seconds)
+- [ ] Cliffhanger strength (each segment ends with unresolved tension)
+- [ ] Scene count ≤ 5 locations per episode
+- [ ] Dialogue compression (no filler lines)
+- [ ] Technical prompts match narrative (1:1 scene coverage)
+- [ ] Character consistency (descriptions match character sheets)
+- [ ] Total duration within target
+
+### Step 5: Present & Iterate
+
+Show user: narrative script + key technical prompts + quality check results.
+Collect feedback → revise → next round.
+
+### Final: Lock
+
+When approved → save `script-final.md` + `prompts-final.md` + `characters/*.md` → mark plan complete.
+
+## Project Output Structure
 
 ```
-aivp-ideation (topic) → aivp-script → aivp-storyboard (shot breakdown)
-                                     → aivp-audio (narration text → TTS)
+project/script/
+├── plan.md                    ← PLAN: track progress + decisions
+├── notes/                     ← NOTES: revision feedback, research
+│   └── round-1.md
+├── characters/                ← DELIVERABLE: character definitions
+│   ├── character-a.md
+│   └── character-b.md
+├── script-v1.md               ← Working versions (narrative)
+├── prompts-v1.md              ← Working versions (technical)
+├── script-final.md            ← DELIVERABLE: approved narrative script
+└── prompts-final.md           ← DELIVERABLE: approved technical prompts
 ```
 
-### Project Directory Convention
+| Layer | Files | Purpose |
+|-------|-------|---------|
+| Plan | `plan.md` | Track rounds, decisions, revision notes |
+| Notes | `notes/*.md` | User feedback, research for revisions |
+| Deliverables | `script-final.md`, `prompts-final.md`, `characters/` | Downstream input |
 
-```
-project/
-├── script.json           ← structured script
-├── script_raw.md         ← human-readable version
-└── metadata/
-    └── script_params.json
-```
+## References (load as needed)
 
-## Tips for Better Scripts
+- **Micro-drama structure** → `references/micro-drama-structure.md` — Hook window, pacing rules, cliffhanger patterns, scene constraints
+- **Prompt formats** → `references/prompt-formats.md` — Kling 3.0 and Seedance 2.0 prompt syntax with examples
+- **Character sheet template** → `references/character-sheet.md` — Visual/voice/conflict definition
+- **Script template** → `references/script-template.md` — Full narrative script structure
+- **Quality checks** → `references/quality-checks.md` — Pre-delivery validation checklist
 
-1. **Keep scenes 10-30 seconds** — matches typical AI video clip length
-2. **Visual directions should be specific** — "woman in red dress on cliff" not "person outside"
-3. **Narration pacing** — ~150 words per minute for comfortable listening
-4. **Hook in first 5 seconds** — critical for social media retention
-5. **End with CTA** — subscribe, follow, visit website
+## Integration
 
-## References
-
-For detailed format specifications and examples, see:
-- [references/formats.md](references/formats.md) — JSON schema and field definitions
-- [references/examples.md](references/examples.md) — Complete script examples by style
+- **Input from:** `aivp-ideation` → `ideation/brief-final.md`
+- **Output to:**
+  - `aivp-storyboard` → `script-final.md` (scene breakdown)
+  - `aivp-image` → `characters/*.md` (character reference generation)
+  - `aivp-video` → `prompts-final.md` (per-shot generation prompts)
+  - `aivp-audio` → `script-final.md` (narration/dialogue text + voice profiles)
