@@ -44,8 +44,24 @@
 
 **原则**：如果搜了就记录，如果引用了就保存来源。不能存在"只在聊天里"的研究数据。
 
+### 教训 7: 用 skill-creator 规范重构
+**问题**：SKILL.md 膨胀到 407 行，所有详细模板、查询表、评分框架都塞在一个文件里。Agent 每次触发 skill 都加载 ~5k words，大部分当轮用不到。
+
+**修复**：按 skill-creator 的 Progressive Disclosure 原则拆分。SKILL.md 只保留核心流程和引用索引（113 行），详细指南移到 7 个 references/ 文件，按需加载。Plan 模板放 assets/。
+
+**原则**：SKILL.md 是流程图 + 导航，不是百科全书。Agent 知道去哪找详细信息就够了。
+
+### 教训 8: 项目输出分三层
+**来自用户反馈**：不能把研究数据和交付物混在一起。
+
+**三层结构**：
+1. **Plan**（plan.md）——先落盘，持续更新状态和决策
+2. **Notes**（notes/）——过程素材，备忘用，不是交付物
+3. **Deliverable**（brief-final.md）——唯一正式交付，传给下游 skill
+
 ## 版本记录
 - v0.2.0: 初始版本（纯模板，curl 脚本）
 - v0.3.0: 转为 agent 原生研究，修复脚本
 - v0.4.0: 增加 Layer 0、Decision Point Format、Freshness Rules
 - v0.5.0: 增加 Artifacts & Documentation（研究落盘、决策日志、AI 基线复用）
+- v0.6.0: 按 skill-creator 规范重构——SKILL.md 瘦身 407→113 行，拆出 7 个 references + 1 个 asset，输出三层结构（plan/notes/deliverable）
