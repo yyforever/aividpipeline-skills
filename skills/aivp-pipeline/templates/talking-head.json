@@ -1,0 +1,91 @@
+{
+  "name": "Talking Head",
+  "description": "AI avatar/digital human explainer video. A realistic talking head delivers your script with lip-synced speech. Ideal for educational content, course videos, news-style updates, and personal brand content without being on camera.",
+  "target_duration": "60-180s",
+  "aspect_ratio": "16:9",
+  "resolution": "1920x1080",
+  "alternate_formats": [
+    { "platform": "shorts", "aspect_ratio": "9:16", "resolution": "1080x1920" }
+  ],
+  "steps": [
+    {
+      "skill": "aivp-audio",
+      "config": {
+        "tts_model": "fal-ai/minimax/speech-2.6-turbo",
+        "voice_style": "natural, conversational, clear",
+        "output_format": "mp3",
+        "notes": "Generate full voiceover first — this drives the lipsync timing."
+      }
+    },
+    {
+      "skill": "aivp-video",
+      "config": {
+        "method": "lipsync",
+        "model": "fal-ai/sadtalker",
+        "input_type": "portrait_photo + audio",
+        "motion_style": "natural_head_movement",
+        "notes": "Takes a single portrait photo + audio file. Generates video with lip-synced speech and natural head movement."
+      }
+    },
+    {
+      "skill": "aivp-edit",
+      "config": {
+        "operations": ["add_title_card", "burn_subtitles", "add_lower_third", "add_background"],
+        "title_card_duration": "3s",
+        "subtitle_style": "clean, bottom-positioned",
+        "lower_third": true,
+        "lower_third_text": "Speaker name + title",
+        "background": "blurred office / gradient / custom",
+        "output_format": "mp4"
+      }
+    },
+    {
+      "skill": "aivp-publish",
+      "config": {
+        "platforms": ["youtube", "linkedin", "website"],
+        "generate_thumbnail": true,
+        "generate_title": true
+      }
+    }
+  ],
+  "default_models": {
+    "video": "fal-ai/sadtalker",
+    "tts": "fal-ai/minimax/speech-2.6-turbo",
+    "lipsync_alt": "fal-ai/latentsync"
+  },
+  "script_template": {
+    "style": "monologue",
+    "structure": [
+      { "part": "intro", "duration": "0-10s", "purpose": "Greet + introduce topic. Set expectations." },
+      { "part": "body", "duration": "10-150s", "purpose": "Main content. Break into 2-4 sections with clear transitions." },
+      { "part": "summary", "duration": "150-170s", "purpose": "Recap key takeaways." },
+      { "part": "cta", "duration": "170-180s", "purpose": "Subscribe/follow/visit link." }
+    ],
+    "notes": "Write as spoken word — use contractions, rhetorical questions, and short sentences. Avoid written-language patterns."
+  },
+  "inputs": {
+    "required": ["script_text"],
+    "optional": ["portrait_photo", "voice_preference", "speaker_name", "speaker_title", "background_preference"]
+  },
+  "example_prompts": [
+    "Use the \"Talking Head\" template: script is \"AI is changing how we write code. Here are 3 ways...\" with this portrait photo.",
+    "Make a talking head video explaining our Q4 earnings summary. Use a professional female voice.",
+    "Talking Head template: create a 2-minute explainer about blockchain for beginners. No photo — use a default avatar."
+  ],
+  "example_topics": [
+    "Weekly tech news update",
+    "Course lesson: Introduction to Python",
+    "Company quarterly update for investors",
+    "Personal finance tip of the week",
+    "Health & wellness: benefits of intermittent fasting"
+  ],
+  "estimated_cost": "$0.50-2",
+  "estimated_time": "5-10 min",
+  "tips": [
+    "Use a high-quality, front-facing portrait photo with good lighting — garbage in, garbage out",
+    "Keep the script conversational — read it aloud before generating; if it sounds stiff, rewrite it",
+    "Shorter is better — 60-90s talking heads hold attention; 3+ minutes needs B-roll or visual variety",
+    "Add lower-third name/title for credibility, especially for educational or business content",
+    "If no portrait is provided, generate one with aivp-image using a realistic portrait prompt"
+  ]
+}

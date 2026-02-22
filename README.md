@@ -30,7 +30,8 @@ npx skills add yyforever/aividpipeline-skills --skill aivp-video
 |-------|-------------|
 | [aivp-image](skills/aivp-image/) | Keyframe and character reference image generation with consistency techniques |
 | [aivp-video](skills/aivp-video/) | Video clip generation via Seedance, Kling, Sora, and other models |
-| [aivp-audio](skills/aivp-audio/) | Voiceover (TTS), background music, and sound effects generation |
+| [aivp-audio](skills/aivp-audio/) | Voiceover (TTS), background music, sound effects, and voice cloning |
+| [aivp-lipsync](skills/aivp-lipsync/) | Audio-driven talking video (OmniHuman), motion transfer (DreamActor), and video dubbing |
 
 ### Post-Production
 
@@ -55,9 +56,11 @@ npx skills add yyforever/aividpipeline-skills --skill aivp-video
 
 ```
 ideation → script → storyboard → image → video → audio
-                                                    ↓
-                                    edit ←──────────┘
-                                      ↓
+                                    ↓               ↓
+                                 lipsync ←──────────┘
+                                    ↓
+                                   edit
+                                    ↓
                               review → publish → ideation (feedback loop)
 ```
 

@@ -1,0 +1,128 @@
+{
+  "name": "Product Demo",
+  "description": "30-90 second product showcase video. Problem-solution structure with close-up product shots and real-world usage scenarios. Works for e-commerce, SaaS, and physical products.",
+  "target_duration": "30-90s",
+  "aspect_ratio": "16:9",
+  "resolution": "1920x1080",
+  "alternate_formats": [
+    { "platform": "instagram_reels", "aspect_ratio": "9:16", "resolution": "1080x1920" },
+    { "platform": "instagram_feed", "aspect_ratio": "1:1", "resolution": "1080x1080" }
+  ],
+  "steps": [
+    {
+      "skill": "aivp-script",
+      "config": {
+        "style": "problem_solution",
+        "structure": "problem → solution_reveal → features → social_proof → CTA",
+        "scenes": 5,
+        "tone": "professional, confident, aspirational",
+        "max_words": 200,
+        "pacing": "medium"
+      }
+    },
+    {
+      "skill": "aivp-storyboard",
+      "config": {
+        "shots": "6-10",
+        "shot_types": ["product_hero", "close_up", "in_use", "before_after", "lifestyle", "cta_card"],
+        "style_notes": "Clean backgrounds, premium lighting, product always in focus. Mix close-ups with lifestyle context shots.",
+        "transitions": "crossfade, zoom"
+      }
+    },
+    {
+      "skill": "aivp-image",
+      "config": {
+        "model": "fal-ai/flux-pro/v1.1",
+        "resolution": "1344x768",
+        "style_consistency": true,
+        "use_product_reference": true,
+        "enhance_product_images": true,
+        "notes": "If user provides product photos, use them as references for consistency. Generate additional angles and contexts."
+      }
+    },
+    {
+      "skill": "aivp-video",
+      "config": {
+        "method": "I2V",
+        "model": "fal-ai/kling-video/v2.6/pro/image-to-video",
+        "clip_duration": "5s",
+        "motion_intensity": "low-medium",
+        "notes": "Product shots need subtle, elegant motion — slow rotation, gentle zoom, smooth reveal. Avoid chaotic movement."
+      }
+    },
+    {
+      "skill": "aivp-audio",
+      "config": {
+        "tts_model": "fal-ai/minimax/speech-2.6-turbo",
+        "voice_style": "professional, warm, trustworthy",
+        "bgm": true,
+        "bgm_style": "corporate, uplifting, modern, clean",
+        "bgm_volume": 0.25,
+        "sfx": true,
+        "sfx_notes": "Subtle whoosh on transitions, soft impact on product reveal"
+      }
+    },
+    {
+      "skill": "aivp-edit",
+      "config": {
+        "operations": ["concat", "mix_audio", "burn_subtitles", "add_logo"],
+        "subtitle_style": "clean, minimal, bottom-third",
+        "color_grading": "bright, high-contrast, commercial",
+        "transitions": "crossfade",
+        "output_format": "mp4"
+      }
+    },
+    {
+      "skill": "aivp-publish",
+      "config": {
+        "platforms": ["youtube", "website", "instagram"],
+        "generate_thumbnail": true,
+        "generate_title": true,
+        "generate_variants": true,
+        "variant_notes": "Generate 16:9 master + 9:16 vertical crop + 1:1 square crop"
+      }
+    }
+  ],
+  "default_models": {
+    "video": "fal-ai/kling-video/v2.6/pro/image-to-video",
+    "image": "fal-ai/flux-pro/v1.1",
+    "tts": "fal-ai/minimax/speech-2.6-turbo",
+    "music": "fal-ai/minimax-music/v2"
+  },
+  "script_template": {
+    "style": "problem_solution",
+    "scenes": 5,
+    "structure": [
+      { "part": "problem", "duration": "0-8s", "purpose": "Show the pain point. Relatable frustration." },
+      { "part": "solution_reveal", "duration": "8-20s", "purpose": "Introduce product as the answer. Hero shot." },
+      { "part": "features", "duration": "20-50s", "purpose": "3 key features/benefits with visual demos." },
+      { "part": "social_proof", "duration": "50-60s", "purpose": "Testimonial, stats, or trust signals." },
+      { "part": "cta", "duration": "60-90s", "purpose": "Clear next step: buy, try, learn more." }
+    ]
+  },
+  "inputs": {
+    "required": ["product_description"],
+    "optional": ["product_images", "brand_colors", "logo", "target_audience", "key_features", "pricing"]
+  },
+  "example_prompts": [
+    "Use the \"Product Demo\" template for my wireless earbuds: noise-canceling, 40h battery, $79. Here are 3 product photos.",
+    "Make a product demo video for our SaaS dashboard — it helps teams track OKRs in real-time.",
+    "Product Demo template: showcase this smart water bottle that tracks hydration and syncs with Apple Health."
+  ],
+  "example_topics": [
+    "Wireless earbuds with noise canceling",
+    "SaaS project management dashboard",
+    "Smart home security camera",
+    "Ergonomic standing desk converter",
+    "AI-powered writing assistant app"
+  ],
+  "estimated_cost": "$2-5",
+  "estimated_time": "15-25 min",
+  "tips": [
+    "Always use the customer's actual product images as reference — AI-generated product shots look generic",
+    "Lead with the problem, not the product — viewers need to feel the pain before they care about the solution",
+    "Show the product in use, not just sitting there — motion and context sell better than hero shots alone",
+    "Keep feature count to 3 max — more than 3 features in 90s overwhelms viewers",
+    "End card should have clear, single CTA — don't give 5 options"
+  ]
+}

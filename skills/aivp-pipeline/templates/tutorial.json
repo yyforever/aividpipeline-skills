@@ -1,0 +1,127 @@
+{
+  "name": "Tutorial",
+  "description": "3-5 minute horizontal tutorial/how-to video with step-by-step instructions. Chapter markers, clear visuals for each step, and detailed narration. Great for educational content, how-to guides, and course modules.",
+  "target_duration": "180-300s",
+  "aspect_ratio": "16:9",
+  "resolution": "1920x1080",
+  "steps": [
+    {
+      "skill": "aivp-script",
+      "config": {
+        "style": "step_by_step",
+        "structure": "intro → prerequisites → step_1 → step_2 → step_3 → step_N → result → recap",
+        "scenes": "8-15",
+        "tone": "clear, patient, encouraging",
+        "max_words": 600,
+        "pacing": "moderate",
+        "notes": "Each step must be self-contained and visually demonstrable. Number the steps explicitly."
+      }
+    },
+    {
+      "skill": "aivp-storyboard",
+      "config": {
+        "shots": "10-20",
+        "shot_types": ["title_card", "overview_diagram", "step_visual", "close_up_detail", "result_reveal", "recap_summary"],
+        "style_notes": "Clean, instructional style. Use consistent color scheme. Each step gets a numbered title overlay. Show both the action and the result.",
+        "transitions": "cut, fade"
+      }
+    },
+    {
+      "skill": "aivp-image",
+      "config": {
+        "model": "fal-ai/flux-pro/v1.1",
+        "resolution": "1344x768",
+        "style_consistency": true,
+        "generate_style_frame": true,
+        "notes": "Generate clear, instructional keyframes. Diagrams, UI mockups, or illustrative scenes. Avoid overly artistic styles — clarity > aesthetics."
+      }
+    },
+    {
+      "skill": "aivp-video",
+      "config": {
+        "method": "I2V",
+        "model": "fal-ai/kling-video/v2.6/pro/image-to-video",
+        "clip_duration": "5s",
+        "motion_intensity": "low",
+        "notes": "Tutorial clips need subtle, controlled motion — pointer movement, highlight animations, gentle zooms. Not cinematic motion."
+      }
+    },
+    {
+      "skill": "aivp-audio",
+      "config": {
+        "tts_model": "fal-ai/minimax/speech-2.6-turbo",
+        "voice_style": "clear, warm, instructional, moderate pace",
+        "bgm": true,
+        "bgm_style": "calm, ambient, unobtrusive, lo-fi",
+        "bgm_volume": 0.15,
+        "notes": "Narration is primary — BGM should be barely noticeable. Pacing slightly slower than short-form content."
+      }
+    },
+    {
+      "skill": "aivp-edit",
+      "config": {
+        "operations": ["concat", "mix_audio", "burn_subtitles", "add_chapters", "add_step_titles"],
+        "subtitle_style": "clean, bottom-positioned, readable",
+        "chapter_markers": true,
+        "step_title_overlay": true,
+        "step_title_position": "top-left",
+        "transitions": "fade",
+        "intro_card": true,
+        "outro_card": true,
+        "output_format": "mp4"
+      }
+    },
+    {
+      "skill": "aivp-publish",
+      "config": {
+        "platforms": ["youtube", "website", "lms"],
+        "generate_thumbnail": true,
+        "generate_title": true,
+        "generate_description": true,
+        "generate_chapters": true,
+        "seo_optimize": true
+      }
+    }
+  ],
+  "default_models": {
+    "video": "fal-ai/kling-video/v2.6/pro/image-to-video",
+    "image": "fal-ai/flux-pro/v1.1",
+    "tts": "fal-ai/minimax/speech-2.6-turbo",
+    "music": "fal-ai/minimax-music/v2"
+  },
+  "script_template": {
+    "style": "step_by_step",
+    "structure": [
+      { "part": "intro", "duration": "0-15s", "purpose": "What you'll learn + why it matters. Set expectations." },
+      { "part": "prerequisites", "duration": "15-30s", "purpose": "What you need before starting. Tools, materials, prior knowledge." },
+      { "part": "steps", "duration": "30-240s", "purpose": "Numbered steps, each with: what to do → how to do it → what you should see." },
+      { "part": "result", "duration": "240-270s", "purpose": "Show the final result. Compare before/after if applicable." },
+      { "part": "recap", "duration": "270-300s", "purpose": "Quick summary of all steps + common mistakes to avoid + CTA." }
+    ]
+  },
+  "inputs": {
+    "required": ["topic"],
+    "optional": ["target_audience", "difficulty_level", "num_steps", "tools_required"]
+  },
+  "example_prompts": [
+    "Use the \"Tutorial\" template to make a video about \"How to set up a Next.js project from scratch\"",
+    "Tutorial template: \"5 steps to create a professional resume in Canva\" for job seekers",
+    "Make a tutorial video: \"How to brew the perfect pour-over coffee\" — beginner level, 3 minutes"
+  ],
+  "example_topics": [
+    "How to set up a Next.js project from scratch",
+    "5 steps to create a professional resume in Canva",
+    "How to brew the perfect pour-over coffee",
+    "Setting up a home NAS with Raspberry Pi",
+    "How to create a budget spreadsheet in Google Sheets"
+  ],
+  "estimated_cost": "$3-8",
+  "estimated_time": "20-40 min",
+  "tips": [
+    "Number every step clearly — both in narration and as visual overlays",
+    "Show the expected result after each step, not just at the end",
+    "Use chapter markers/timestamps — they improve YouTube SEO and viewer retention",
+    "Keep each step under 45 seconds — if a step is longer, break it into sub-steps",
+    "Add a 'common mistakes' section — it's the most valuable part for learners and boosts watch time"
+  ]
+}

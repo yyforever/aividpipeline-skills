@@ -1,0 +1,157 @@
+{
+  "name": "Brand Story",
+  "description": "1-3 minute cinematic brand narrative short film. Emotional storytelling with a clear narrative arc, premium visuals, and professional audio. Ideal for brand launches, about-us pages, investor pitches, and social campaigns.",
+  "target_duration": "60-180s",
+  "aspect_ratio": "16:9",
+  "resolution": "1920x1080",
+  "alternate_formats": [
+    { "platform": "instagram_reels", "aspect_ratio": "9:16", "resolution": "1080x1920" },
+    { "platform": "cinema", "aspect_ratio": "2.39:1", "resolution": "1920x803" }
+  ],
+  "steps": [
+    {
+      "skill": "aivp-ideation",
+      "config": {
+        "focus": "brand_narrative_angle",
+        "tasks": [
+          "Identify the brand's origin story, mission, or core tension",
+          "Find the emotional hook — what makes people CARE",
+          "Choose narrative perspective: founder journey / customer transformation / mission-driven / behind-the-scenes",
+          "Define visual mood: warm & human / bold & innovative / serene & premium / raw & authentic"
+        ]
+      }
+    },
+    {
+      "skill": "aivp-script",
+      "config": {
+        "style": "narrative",
+        "structure": "setup → tension → turning_point → resolution → vision",
+        "scenes": "8-12",
+        "tone": "emotional, authentic, cinematic",
+        "max_words": 350,
+        "pacing": "deliberate, breathing room between moments",
+        "notes": "This is storytelling, not advertising. Show, don't tell. Let visuals carry emotion while narration provides meaning."
+      }
+    },
+    {
+      "skill": "aivp-storyboard",
+      "config": {
+        "shots": "12-20",
+        "shot_types": ["establishing_wide", "intimate_close_up", "detail_insert", "montage", "portrait", "symbolic", "hero_moment"],
+        "style_notes": "Cinematic composition. Use rule of thirds, natural lighting, depth of field. Mix wide establishing shots with intimate details. Every shot should evoke an emotion.",
+        "color_palette": "derived from brand colors, muted and cinematic",
+        "transitions": "crossfade, match_cut, fade_to_black"
+      }
+    },
+    {
+      "skill": "aivp-image",
+      "config": {
+        "model": "fal-ai/flux-pro/v1.1",
+        "resolution": "1344x768",
+        "style_consistency": true,
+        "generate_style_frame": true,
+        "style_references": true,
+        "notes": "Generate a style frame first to lock the visual language. All subsequent keyframes must match. Use cinematic lighting, shallow depth of field, film grain optional."
+      }
+    },
+    {
+      "skill": "aivp-video",
+      "config": {
+        "method": "I2V",
+        "model": "fal-ai/kling-video/v2.6/pro/image-to-video",
+        "clip_duration": "5s",
+        "motion_intensity": "low-medium",
+        "notes": "Slow, intentional camera movement — dolly, crane, subtle parallax. This is not fast-paced content. Let shots breathe."
+      }
+    },
+    {
+      "skill": "aivp-audio",
+      "config": {
+        "tts_model": "fal-ai/minimax/speech-2.6-turbo",
+        "voice_style": "warm, contemplative, storyteller",
+        "bgm": true,
+        "bgm_model": "fal-ai/minimax-music/v2",
+        "bgm_style": "emotional, cinematic, piano or strings, building crescendo",
+        "bgm_volume": 0.4,
+        "notes": "Music is a first-class element here, not background. Score should follow the emotional arc: quiet opening → building tension → emotional peak → resolved outro."
+      }
+    },
+    {
+      "skill": "aivp-edit",
+      "config": {
+        "operations": ["concat", "mix_audio", "burn_subtitles", "color_grade", "add_transitions", "add_logo"],
+        "color_grading": "cinematic, brand-aligned color palette",
+        "subtitle_style": "elegant, thin font, lower-third, optional",
+        "transitions": "crossfade, fade_to_black",
+        "pacing": "let shots breathe, 3-5s per shot minimum",
+        "intro": "fade_from_black",
+        "outro": "fade_to_black + logo_reveal",
+        "output_format": "mp4",
+        "output_quality": "high"
+      }
+    },
+    {
+      "skill": "aivp-review",
+      "config": {
+        "checks": ["emotional_impact", "brand_consistency", "pacing", "audio_quality", "visual_coherence"],
+        "notes": "Brand stories need human review. Automated checks catch technical issues, but emotional resonance requires judgment."
+      }
+    },
+    {
+      "skill": "aivp-publish",
+      "config": {
+        "platforms": ["youtube", "website_hero", "linkedin", "instagram"],
+        "generate_thumbnail": true,
+        "generate_title": true,
+        "generate_variants": true,
+        "variant_notes": "16:9 master for YouTube/website, 9:16 cut for social, 15s teaser cut for ads"
+      }
+    }
+  ],
+  "default_models": {
+    "video": "fal-ai/kling-video/v2.6/pro/image-to-video",
+    "image": "fal-ai/flux-pro/v1.1",
+    "tts": "fal-ai/minimax/speech-2.6-turbo",
+    "music": "fal-ai/minimax-music/v2"
+  },
+  "script_template": {
+    "style": "narrative",
+    "scenes": 10,
+    "narrative_arc": [
+      { "part": "opening", "duration": "0-10s", "purpose": "Establish the world. Wide shot + ambient sound. No narration yet." },
+      { "part": "setup", "duration": "10-30s", "purpose": "Introduce the protagonist (founder/customer/community). Show their world." },
+      { "part": "tension", "duration": "30-50s", "purpose": "The problem, the gap, the frustration. What's broken in the world?" },
+      { "part": "turning_point", "duration": "50-70s", "purpose": "The moment of insight, creation, or decision. The brand's reason for existing." },
+      { "part": "building", "duration": "70-100s", "purpose": "The journey — building, growing, overcoming. Montage energy." },
+      { "part": "impact", "duration": "100-130s", "purpose": "The result — lives changed, problems solved, beauty created." },
+      { "part": "vision", "duration": "130-160s", "purpose": "Where we're going. The bigger picture. Aspirational." },
+      { "part": "close", "duration": "160-180s", "purpose": "Brand mark + tagline. Let the emotion linger. Fade to black." }
+    ]
+  },
+  "inputs": {
+    "required": ["brand_name", "brand_description"],
+    "optional": ["brand_mission", "brand_values", "founding_story", "target_audience", "brand_colors", "logo", "tone_preference", "reference_videos"]
+  },
+  "example_prompts": [
+    "Use the \"Brand Story\" template for Patagonia-style outdoor brand 'TrailForge' — mission is making adventure gear from recycled ocean plastic.",
+    "Brand Story template: tell the story of our AI startup 'Lumina' — we help blind people navigate cities with audio AR.",
+    "Make a brand story for my coffee roastery 'Origin' — we source directly from farmers in Colombia and Ethiopia, paying 3x fair trade prices."
+  ],
+  "example_topics": [
+    "Sustainable outdoor gear brand story",
+    "AI accessibility startup origin story",
+    "Direct-trade coffee roastery brand film",
+    "Local bookshop community impact story",
+    "Clean energy startup vision film"
+  ],
+  "estimated_cost": "$5-12",
+  "estimated_time": "30-50 min",
+  "tips": [
+    "Start with silence or ambient sound — don't rush into narration. Let the audience settle into the world.",
+    "Find the human story behind the brand — people connect with people, not products or mission statements",
+    "Use the 'show, don't tell' rule — if narration says 'we care about quality', the visual should SHOW quality, not just state it",
+    "Music makes or breaks brand stories — spend time on the score. It should have its own arc matching the narrative.",
+    "Generate a style frame first and approve it before creating all keyframes — visual consistency is everything in brand films",
+    "Keep it under 2 minutes for social, up to 3 minutes for website hero — anything longer loses casual viewers"
+  ]
+}

@@ -129,39 +129,385 @@ bash scripts/generate.sh --result "abc123" --model "fal-ai/veo3.1"
 
 ### Text-to-Video
 
-| Model | Speed | Quality | Notes |
-|-------|:-----:|:-------:|-------|
-| `fal-ai/bytedance/seedance/v1.5/pro` | ⚡⚡ | ★★★★ | **Default** — fast, good quality, native audio |
-| `fal-ai/veo3.1` | ⚡ | ★★★★★ | Highest quality, slow |
-| `fal-ai/sora-2/pro` | ⚡ | ★★★★★ | OpenAI Sora |
-| `fal-ai/kling-video/v2.5-turbo/pro` | ⚡⚡⚡ | ★★★ | Fastest |
-| `fal-ai/minimax/hailuo-02/pro` | ⚡⚡ | ★★★★ | Good for characters |
-| `fal-ai/bytedance/seedance/v1/pro` | ⚡⚡ | ★★★ | Older Seedance |
+| Model | Speed | Quality | Pricing (参考) | Notes |
+|-------|:-----:|:-------:|:-------------:|-------|
+| `fal-ai/bytedance/seedance/v1.5/pro` | ⚡⚡ | ★★★★ | ~$0.05/s (720p+audio) | **Default** — native audio, lip-sync |
+| `fal-ai/veo3.1` | ⚡ | ★★★★★ | $0.20-0.40/s | Highest quality, 4K support |
+| `fal-ai/sora-2/text-to-video/pro` | ⚡ | ★★★★★ | $0.30-0.50/s | Up to 25s, native audio |
+| `fal-ai/kling-video/v2.5-turbo/pro` | ⚡⚡⚡ | ★★★ | ~$0.07/s | Fastest generation |
+| `fal-ai/minimax/hailuo-02/pro` | ⚡⚡ | ★★★★ | $0.08/s (1080p) | Best physics, director camera |
+| `fal-ai/bytedance/seedance/v1/pro` | ⚡⚡ | ★★★ | ~$0.02/s (720p) | Budget option |
 
 ### Image-to-Video
 
-| Model | Speed | Quality | Notes |
-|-------|:-----:|:-------:|-------|
-| `fal-ai/kling-video/v2.6/pro/image-to-video` | ⚡⚡ | ★★★★★ | **Best overall** |
-| `fal-ai/veo3/fast` | ⚡⚡⚡ | ★★★★ | Fast, high quality |
-| `fal-ai/bytedance/seedance/v1.5/pro/image-to-video` | ⚡⚡ | ★★★★ | Smooth motion |
-| `fal-ai/minimax/hailuo-02/standard/image-to-video` | ⚡⚡ | ★★★ | Good balance |
+| Model | Speed | Quality | Pricing (参考) | Notes |
+|-------|:-----:|:-------:|:-------------:|-------|
+| `fal-ai/kling-video/v2.6/pro/image-to-video` | ⚡⚡ | ★★★★★ | $0.07-0.14/s | **Best I2V** — native audio |
+| `fal-ai/veo3.1/fast/image-to-video` | ⚡⚡⚡ | ★★★★ | ~$0.10/s | Fast, high quality |
+| `fal-ai/bytedance/seedance/v1.5/pro/image-to-video` | ⚡⚡ | ★★★★ | ~$0.05/s (720p+audio) | Start+end frame, lip-sync |
+| `fal-ai/minimax/hailuo-02/standard/image-to-video` | ⚡⚡ | ★★★ | ~$0.017/s (512p) | Budget I2V |
 
 ### Video-to-Video (Style Transfer)
 
 | Model | Notes |
 |-------|-------|
-| `fal-ai/kling-video/v2.6/pro/video-to-video` | Style transfer, motion retargeting |
+| `fal-ai/kling-video/v2.6/pro/video-to-video` | Style transfer, motion retargeting — $0.112/s |
 
-## Model Selection Guide
+---
 
-**Choose by use case:**
-- 🎬 **Cinematic / hero shots** → `veo3.1` or `sora-2/pro`
-- ⚡ **Fast iteration / previews** → `kling-video/v2.5-turbo/pro`
-- 🧑 **Character animation** → `minimax/hailuo-02/pro`
-- 🖼️ **Animate keyframe** → `kling-video/v2.6/pro/image-to-video`
-- 🎵 **Video with audio** → `seedance/v1.5/pro` (native audio support)
-- 💰 **Budget-conscious** → `seedance/v1/pro` or `kling-video/v2.5-turbo`
+## Detailed Model Documentation
+
+### 🎬 Seedance v1.5 Pro (Default)
+
+**Model IDs:**
+- T2V: `fal-ai/bytedance/seedance/v1.5/pro/text-to-video`
+- I2V: `fal-ai/bytedance/seedance/v1.5/pro/image-to-video`
+
+**Core Features:** Native audio generation (dialogue + SFX + BGM), lip-sync, cinematic camera, start+end frame control (I2V)
+
+#### Parameter Reference — T2V
+
+| Parameter | Type | Required | Default | Range / Options |
+|-----------|------|:--------:|---------|-----------------|
+| `prompt` | string | **Yes** | — | Describe scene, action, dialogue (in quotes), camera, sound |
+| `aspect_ratio` | string | No | `"16:9"` | `21:9`, `16:9`, `4:3`, `1:1`, `3:4`, `9:16` |
+| `resolution` | string | No | `"720p"` | `480p` (fast) / `720p` (balanced) / `1080p` (highest, T2V only) |
+| `duration` | string | No | `"5"` | `4` – `12` seconds |
+| `generate_audio` | boolean | No | `true` | `true` / `false` — false 时价格减半 |
+| `camera_fixed` | boolean | No | `false` | `true` = tripod mode |
+| `seed` | integer | No | random | `-1` for random, or specific integer |
+
+#### Parameter Reference — I2V (additional)
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|:--------:|---------|-------------|
+| `image_url` | string | **Yes** | — | Start frame image URL |
+| `end_image_url` | string | No | — | End frame image URL (generates motion between frames) |
+
+*I2V max resolution is 720p; T2V supports up to 1080p.*
+
+#### Resolution / Duration / Pricing Matrix (参考价格)
+
+**T2V (Text-to-Video):**
+
+| Resolution | With Audio | Without Audio | 5s cost (audio) | 10s cost (audio) |
+|:----------:|:----------:|:-------------:|:---------------:|:----------------:|
+| 480p | ~$0.024/s | ~$0.012/s | ~$0.12 | ~$0.24 |
+| 720p | ~$0.052/s | ~$0.026/s | ~$0.26 | ~$0.52 |
+| 1080p | ~$0.115/s | ~$0.058/s | ~$0.58 | ~$1.15 |
+
+> Token-based pricing: 1M video tokens = $2.4 (audio) / $1.2 (no audio). tokens = height × width × FPS × duration / 1024
+
+**I2V (Image-to-Video):** Similar token-based pricing, 720p max.
+
+#### Input/Output Example
+
+**Request (T2V):**
+```json
+{
+  "prompt": "Defense attorney declaring \"Ladies and gentlemen, reasonable doubt isn't just a phrase, it's the foundation of justice itself\", footsteps on marble, jury shifting, courtroom drama, closing argument power.",
+  "aspect_ratio": "16:9",
+  "resolution": "720p",
+  "duration": "5",
+  "generate_audio": true
+}
+```
+
+**Request (I2V):**
+```json
+{
+  "prompt": "Camera slowly zooms in, hair blowing in wind, she says \"I've been waiting for this\"",
+  "image_url": "https://example.com/portrait.jpg",
+  "end_image_url": "https://example.com/portrait_end.jpg",
+  "resolution": "720p",
+  "duration": "5",
+  "generate_audio": true
+}
+```
+
+**Response:**
+```json
+{
+  "video": {
+    "url": "https://v3.fal.media/files/.../video.mp4",
+    "content_type": "video/mp4"
+  }
+}
+```
+
+#### Prompt Tips (Seedance Specific)
+
+| Element | Example |
+|---------|---------|
+| **Scene** | `"Rainy Tokyo alley at night, neon reflections on wet pavement"` |
+| **Action** | `"A woman in a trench coat turns and walks toward camera"` |
+| **Dialogue** | `"I told you — we don't have much time."` (用引号包裹) |
+| **Camera** | `"Slow dolly-in ending on a close-up"` |
+| **Sound/Foley** | `"Rain on metal, distant traffic, her heels on concrete"` |
+
+> ⚠️ **Common Pitfalls:**
+> - Dialogue must be in quotes; describe emotion: `"I can't believe it," voice breaking with emotion`
+> - Keep 1-2 characters per clip for best coherence
+> - `camera_fixed: true` for stable shots; describe camera movement in prompt otherwise
+
+---
+
+### 🎥 Kling v2.6 Pro (Best I2V)
+
+**Model IDs:**
+- T2V: `fal-ai/kling-video/v2.6/pro/text-to-video`
+- I2V: `fal-ai/kling-video/v2.6/pro/image-to-video`
+- V2V: `fal-ai/kling-video/v2.6/pro/video-to-video`
+
+**Core Features:** Cinematic motion, native audio + voice control, Chinese/English speech, auto-translation
+
+#### Parameter Reference — I2V
+
+| Parameter | Type | Required | Default | Range / Options |
+|-----------|------|:--------:|---------|-----------------|
+| `prompt` | string | **Yes** | — | Scene/action description; embed dialogue in quotes |
+| `image_url` | string | **Yes** | — | Start frame (jpg/jpeg/png/webp/gif/avif) |
+| `end_image_url` | string | No | — | End frame image |
+| `duration` | string | No | `"5"` | `5` or `10` seconds |
+| `aspect_ratio` | string | No | `"16:9"` | `16:9`, `9:16`, `1:1` |
+| `generate_audio` | boolean | No | `false` | Enable native audio generation |
+| `voice_ids` | array | No | — | Voice IDs for voice control |
+| `negative_prompt` | string | No | — | What to avoid |
+| `seed` | integer | No | random | Reproducibility seed |
+| `cfg_scale` | float | No | — | Prompt adherence strength |
+
+#### Pricing (参考价格)
+
+| Mode | Per Second | 5s Cost | 10s Cost |
+|------|:----------:|:-------:|:--------:|
+| No audio | $0.07 | $0.35 | $0.70 |
+| With audio | $0.14 | $0.70 | $1.40 |
+| Audio + voice control | $0.168 | $0.84 | $1.68 |
+
+#### Input/Output Example
+
+**Request (I2V with audio):**
+```json
+{
+  "prompt": "A king walks slowly and says \"My people, here I am! I am here to save you all\"",
+  "image_url": "https://example.com/king_portrait.jpg",
+  "duration": "5",
+  "generate_audio": true
+}
+```
+
+**Response:**
+```json
+{
+  "video": {
+    "url": "https://v3.fal.media/files/.../output.mp4",
+    "content_type": "video/mp4"
+  }
+}
+```
+
+> ⚠️ **Tips:** Use UPPERCASE for acronyms/proper nouns in English dialogue for correct pronunciation. Chinese and English are natively supported; other languages auto-translate.
+
+---
+
+### 🌟 Veo 3.1 (Highest Quality)
+
+**Model IDs:**
+- T2V: `fal-ai/veo3.1`
+- I2V: `fal-ai/veo3.1/fast/image-to-video`
+- First+Last Frame: `fal-ai/veo3.1/first-last-frame-to-video`
+
+**Core Features:** Google's flagship model, highest visual quality, 4K support, native audio
+
+#### Parameter Reference — T2V
+
+| Parameter | Type | Required | Default | Range / Options |
+|-----------|------|:--------:|---------|-----------------|
+| `prompt` | string | **Yes** | — | Detailed scene description |
+| `aspect_ratio` | string | No | `"16:9"` | `16:9`, `9:16` |
+| `duration` | string | No | `"8"` | `5` – `8` seconds |
+| `generate_audio` | boolean | No | `true` | Enable/disable audio |
+| `resolution` | string | No | `"720p"` | `720p`, `1080p`, `4k` |
+| `enhance_prompt` | boolean | No | `true` | Auto-enhance prompt |
+| `seed` | integer | No | random | Reproducibility seed |
+
+#### Pricing (参考价格)
+
+| Resolution | Without Audio | With Audio | 5s (audio) | 8s (audio) |
+|:----------:|:------------:|:----------:|:----------:|:----------:|
+| 720p / 1080p | $0.20/s | $0.40/s | $2.00 | $3.20 |
+| 4K | $0.40/s | $0.60/s | $3.00 | $4.80 |
+
+#### Input/Output Example
+
+**Request:**
+```json
+{
+  "prompt": "Aerial drone shot of a vast lavender field at golden hour, camera slowly descending toward a lone farmhouse, warm light spilling from windows, gentle wind rippling through purple flowers",
+  "aspect_ratio": "16:9",
+  "duration": "8",
+  "generate_audio": true,
+  "resolution": "1080p"
+}
+```
+
+**Response:**
+```json
+{
+  "video": {
+    "url": "https://v3.fal.media/files/.../video.mp4",
+    "content_type": "video/mp4"
+  }
+}
+```
+
+> ⚠️ **Best for:** Hero shots, cinematic content, final output. Not for fast iteration (slow + expensive).
+
+---
+
+### 🔮 Sora 2 Pro (OpenAI)
+
+**Model ID:** `fal-ai/sora-2/text-to-video/pro`
+
+**Core Features:** Up to 25s duration (industry-leading), native audio with dialogue lip-sync, environmental sound
+
+#### Parameter Reference
+
+| Parameter | Type | Required | Default | Range / Options |
+|-----------|------|:--------:|---------|-----------------|
+| `prompt` | string | **Yes** | — | Natural language scene description |
+| `aspect_ratio` | string | No | `"16:9"` | `16:9`, `9:16` |
+| `duration` | integer | No | `8` | `4`, `8`, `12`, up to `25` seconds |
+| `resolution` | string | No | `"1080p"` | `720p`, `1080p` |
+| `seed` | integer | No | random | Reproducibility seed |
+
+#### Pricing (参考价格)
+
+| Resolution | Per Second | 5s Cost | 10s Cost | 25s Cost |
+|:----------:|:----------:|:-------:|:--------:|:--------:|
+| 720p | $0.30 | $1.50 | $3.00 | $7.50 |
+| 1080p | $0.50 | $2.50 | $5.00 | $12.50 |
+
+> ⚠️ **Most expensive** model but unique 25s capability. Audio is always generated.
+
+#### Input/Output Example
+
+**Request:**
+```json
+{
+  "prompt": "A bustling Tokyo fish market at dawn, vendors arranging fresh tuna, steam rising from cooking stalls, a cat weaves between wooden crates, cinematic handheld camera",
+  "aspect_ratio": "16:9",
+  "duration": 12,
+  "resolution": "1080p"
+}
+```
+
+---
+
+### 🌊 MiniMax Hailuo-02 Pro
+
+**Model IDs:**
+- T2V: `fal-ai/minimax/hailuo-02/pro/text-to-video`
+- I2V: `fal-ai/minimax/hailuo-02/pro/image-to-video`
+- Standard T2V: `fal-ai/minimax/hailuo-02/standard/text-to-video`
+- Standard I2V: `fal-ai/minimax/hailuo-02/standard/image-to-video`
+
+**Core Features:** Best physics simulation, director camera commands, prompt optimizer, 1080p native
+
+#### Parameter Reference — T2V (Pro)
+
+| Parameter | Type | Required | Default | Range / Options |
+|-----------|------|:--------:|---------|-----------------|
+| `prompt` | string | **Yes** | — | Text + `[camera commands]` |
+| `prompt_optimizer` | boolean | No | `true` | Auto-enhance prompt quality |
+| `duration` | integer | No | `6` | `6` or `10` seconds |
+| `resolution` | string | No | `"1080P"` | `768P` (Standard), `1080P` (Pro) |
+| `first_frame_image` | string | No | — | First frame image URL (I2V mode) |
+
+#### Camera Commands (in square brackets)
+
+`[Pan left/right]` · `[Truck left/right]` · `[Push in/Pull out]` · `[Pedestal up/down]` · `[Tilt up/down]` · `[Zoom in/out]` · `[Shake]` · `[Tracking shot]` · `[Static shot]`
+
+> Combine up to 3 per prompt: `[Truck left, Pan right, Zoom in]`
+
+#### Pricing (参考价格)
+
+| Tier | Resolution | Per Second | 6s Cost | 10s Cost |
+|------|:----------:|:----------:|:-------:|:--------:|
+| Pro | 1080P | $0.08 | $0.48 | $0.80 |
+| Standard | 768P | $0.045 | $0.27 | $0.45 |
+| Standard I2V | 512-768P | ~$0.017-0.045/s | ~$0.10-0.27 | — |
+
+#### Input/Output Example
+
+**Request (T2V Pro):**
+```json
+{
+  "prompt": "A serene mountain landscape with clouds rolling over peaks at sunset [Push in, Tilt up]",
+  "prompt_optimizer": true,
+  "duration": 6,
+  "resolution": "1080P"
+}
+```
+
+**Response:**
+```json
+{
+  "video": {
+    "url": "https://v3.fal.media/files/.../video.mp4",
+    "content_type": "video/mp4"
+  }
+}
+```
+
+> ⚠️ **Tips:** Use `prompt_optimizer: true` for better results. Image input requires aspect ratio between 2:5 and 5:2, min 300px on shorter side.
+
+---
+
+## Model Selection Decision Tree
+
+```
+                        Need video generation?
+                               │
+                    ┌──────────┴──────────┐
+                    │                     │
+              Text-to-Video          Image-to-Video
+                    │                     │
+            ┌───────┴───────┐      ┌──────┴──────┐
+            │               │      │             │
+       Need audio?     No audio   Best quality?  Budget?
+            │               │      │             │
+     ┌──────┴──────┐   Fast iter   Kling 2.6    Hailuo Std
+     │             │   Kling 2.5t   Pro I2V      I2V
+  Best quality?  Budget?  ($0.07)  ($0.07-0.14)  ($0.017)
+     │             │
+  ┌──┴──┐    Seedance
+  │     │    v1.5 Pro
+Sora 2  Veo 3.1  ($0.05)
+($0.50) ($0.40)
+```
+
+**Quick Decision:**
+- 🎬 **Cinematic / hero shots** → `veo3.1` ($0.40/s) or `sora-2/pro` ($0.50/s)
+- ⚡ **Fast iteration / previews** → `kling-video/v2.5-turbo/pro` ($0.07/s)
+- 🧑 **Characters + physics** → `minimax/hailuo-02/pro` ($0.08/s)
+- 🖼️ **Best I2V** → `kling-video/v2.6/pro/image-to-video` ($0.07-0.14/s)
+- 🎵 **Video with audio (budget)** → `seedance/v1.5/pro` (~$0.05/s)
+- 🎵 **Video with audio (premium)** → `sora-2/pro` ($0.30-0.50/s)
+- 💰 **Cheapest** → `seedance/v1/pro` (~$0.02/s) or `hailuo-02/standard` ($0.045/s)
+- ⏱️ **Longest duration (25s)** → `sora-2/pro` only
+- 📺 **4K output** → `veo3.1` only
+
+## Best Practices
+
+1. **Prompt Structure**: Scene → Action → Dialogue → Camera → Sound/Foley
+2. **Dialogue in quotes**: `"Hello world"` — models that support audio will generate speech
+3. **Camera description**: Be specific — "slow dolly-in", "handheld shake", "drone pull-out"
+4. **Seed for consistency**: Use same `--seed` across related clips
+5. **Resolution strategy**: Generate at 480p/720p for testing, 1080p+ for final
+6. **Audio toggle**: Set `generate_audio: false` to halve Seedance costs when audio not needed
+7. **I2V over T2V**: When you have keyframes, I2V gives more control over appearance
+8. **Budget workflow**: Seedance v1 Pro Fast → test → upgrade to v1.5 Pro or Kling 2.6 for final
 
 ## Integration with AIVP Pipeline
 

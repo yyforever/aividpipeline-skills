@@ -1,0 +1,120 @@
+{
+  "name": "YouTube Short",
+  "description": "60-second vertical short video optimized for YouTube Shorts, TikTok, and Instagram Reels. Hook-driven structure with fast pacing and captions.",
+  "target_duration": "60s",
+  "aspect_ratio": "9:16",
+  "resolution": "1080x1920",
+  "steps": [
+    {
+      "skill": "aivp-script",
+      "config": {
+        "style": "listicle",
+        "structure": "hook + 3_points + CTA",
+        "scenes": 5,
+        "hook_style": "curiosity_gap",
+        "tone": "energetic, conversational",
+        "max_words": 150,
+        "pacing": "fast"
+      }
+    },
+    {
+      "skill": "aivp-storyboard",
+      "config": {
+        "shots": "5-8",
+        "aspect_ratio": "9:16",
+        "shot_duration": "3-8s",
+        "style_notes": "Bold text overlays, dynamic motion, mobile-first framing. Subject centered for vertical format.",
+        "transitions": "cut, zoom, swipe"
+      }
+    },
+    {
+      "skill": "aivp-image",
+      "config": {
+        "model": "fal-ai/flux/schnell",
+        "resolution": "768x1344",
+        "style_consistency": true,
+        "generate_style_frame": true
+      }
+    },
+    {
+      "skill": "aivp-video",
+      "config": {
+        "method": "I2V",
+        "model": "fal-ai/kling-video/v2.6/pro/image-to-video",
+        "clip_duration": "5s",
+        "motion_intensity": "medium-high"
+      }
+    },
+    {
+      "skill": "aivp-audio",
+      "config": {
+        "tts_model": "fal-ai/minimax/speech-2.6-turbo",
+        "voice_style": "energetic, young, upbeat",
+        "bgm": true,
+        "bgm_style": "trending, upbeat, lo-fi or electronic",
+        "bgm_volume": 0.3
+      }
+    },
+    {
+      "skill": "aivp-edit",
+      "config": {
+        "operations": ["concat", "mix_audio", "burn_subtitles"],
+        "subtitle_style": "large, bold, centered, word-by-word highlight",
+        "subtitle_font_size": 48,
+        "subtitle_position": "center",
+        "transitions": "cut",
+        "output_format": "mp4",
+        "output_codec": "h264"
+      }
+    },
+    {
+      "skill": "aivp-publish",
+      "config": {
+        "platforms": ["youtube_shorts", "tiktok", "reels"],
+        "generate_thumbnail": true,
+        "generate_title": true,
+        "generate_hashtags": true,
+        "hashtag_count": 5
+      }
+    }
+  ],
+  "default_models": {
+    "video": "fal-ai/kling-video/v2.6/pro/image-to-video",
+    "image": "fal-ai/flux/schnell",
+    "tts": "fal-ai/minimax/speech-2.6-turbo",
+    "music": "fal-ai/minimax-music/v2"
+  },
+  "script_template": {
+    "style": "listicle",
+    "scenes": 5,
+    "hook_style": "curiosity",
+    "structure": [
+      { "part": "hook", "duration": "0-5s", "purpose": "Stop the scroll. Bold claim or question." },
+      { "part": "point_1", "duration": "5-20s", "purpose": "First key insight with visual proof." },
+      { "part": "point_2", "duration": "20-35s", "purpose": "Second insight, build momentum." },
+      { "part": "point_3", "duration": "35-50s", "purpose": "Third insight, strongest or most surprising." },
+      { "part": "cta", "duration": "50-60s", "purpose": "Follow + like + comment prompt." }
+    ]
+  },
+  "example_prompts": [
+    "Use the \"YouTube Short\" template to make a video about \"5 AI tools that replaced my team\"",
+    "Use the \"YouTube Short\" template: \"3 morning habits that changed my productivity\"",
+    "Make a YouTube Short about \"Why 90% of startups fail in year one\""
+  ],
+  "example_topics": [
+    "5 AI tools that replaced my team",
+    "3 morning habits that changed my productivity",
+    "Why 90% of startups fail in year one",
+    "The $1 vs $1000 camera comparison",
+    "Things I wish I knew before learning to code"
+  ],
+  "estimated_cost": "$1-3",
+  "estimated_time": "10-15 min",
+  "tips": [
+    "Hook must grab attention in under 2 seconds — use bold text + surprising visual",
+    "Subtitles are mandatory — 85% of Shorts are watched without sound",
+    "Keep each point to ONE idea with ONE visual — no information overload",
+    "End with a question to boost comments and engagement",
+    "Test multiple hooks: curiosity, controversy, and shock hooks perform differently per niche"
+  ]
+}
