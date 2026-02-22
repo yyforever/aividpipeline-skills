@@ -77,6 +77,37 @@
 
 ---
 
+---
+
+## 5. 对标项目（开源 + 商业）
+
+### 开源 Pipeline
+
+| 项目 | GitHub Stars | 定位 | Pipeline 覆盖 | 可参考点 |
+|------|:-----------:|------|-------------|---------|
+| **ViMax** (HKUDS) | 趋势上升 | Agentic Video Generation — Director+Screenwriter+Producer+Generator All-in-One | Idea→Script→Storyboard→Character→Video | Multi-agent 架构：独立 Director/Screenwriter/Producer agent 协作；支持 Idea2Video、Novel2Video、Script2Video、AutoCameo 四种模式 |
+| **Huobao Drama（火宝短剧）** | — | 一句话生成完整短剧 | Script→Character→Storyboard→Video→Edit | Go+Vue3 全栈；DDD 架构；角色管理+分镜生成+视频合成+转场；支持 doubao 作为 video provider |
+| **Pallaidium** | — | Blender 集成 AI 电影工作室 | Text→Image/Video/Audio/Music/Speech | 集成到 Blender VSE，支持 ControlNet/IP Adapter/LoRA；偏工具箱不是 pipeline |
+| **video-creator** (prakashdk) | — | 全离线 pipeline | Script→TTS→Image→Subtitle→Video | 离线运行，适合 Shorts/storytelling |
+
+### 商业平台
+
+| 平台 | 定位 | Pipeline 覆盖 | 可参考点 |
+|------|------|-------------|---------|
+| **Genra AI** | AI 短剧生成专用 | Script→Cast(Reference Seeds)→Scene→Lip-Sync→Edit→Publish | 角色 Reference Seeds 保一致性；内置语音+口型同步+剪辑；Prompt 公式 |
+| **LTX Studio** | 企业级 AI 视频制作 | Script→Storyboard→Elements→Video→Audio-to-Video | Script 自动分镜；Elements 系统（角色/物件一致性）；Audio-to-Video 口型同步 |
+| **MicroDrama AI** | 微短剧一站式平台 | Idea→Script→Character→Video | "30 分钟从想法到视频"；专门针对微短剧优化 |
+| **Frameo AI** | AI Micro Drama | Script→Shots→Character Voice→Camera→Video | 自动拆分镜头+角色声音+摄影机选择 |
+| **Drama-Story** | 短剧制作平台 | Idea→Story→Storyboard→Video | AI story generation + 分镜 + 视频 |
+
+### 关键模式总结
+
+1. **Multi-agent 编排**（ViMax）— 每个生产阶段由独立 agent 负责，互相协作。最接近我们 aivp-pipeline 的目标架构
+2. **角色 Reference Seeds**（Genra）— script 阶段定义角色外观 → 全流程复用。和我们的 character sheet 设计一致
+3. **Script 自动分镜**（LTX/Huobao）— 从叙事脚本自动生成逐镜头 prompt。这就是我们的"双层输出"
+4. **Elements 系统**（LTX）— 统一的角色/物件/场景定义，跨镜头保持一致。值得在 pipeline 层面参考
+5. **全栈 DDD 架构**（Huobao）— Go+Vue 全栈产品化。如果我们要做产品而非 skill，这是参考
+
 ## 4. 对 aivp-script Skill 的启示
 
 ### 当前问题
