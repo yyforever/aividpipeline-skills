@@ -1,9 +1,9 @@
 ---
 name: aivp-ideation
-description: Video topic ideation through iterative research — trend scanning, community research, competitor analysis, and hook generation. Activate on "video ideas", "trending topics", "content ideas", "what should I make a video about", or any ideation request.
+description: Video topic ideation through iterative research — AI capability assessment, trend scanning, community research, competitor analysis, and hook generation. Activate on "video ideas", "trending topics", "content ideas", "what should I make a video about", or any ideation request.
 metadata:
   author: aividpipeline
-  version: "0.3.0"
+  version: "0.4.0"
   tags: ideation, trending, topics, research, content-strategy, hooks
 ---
 
@@ -16,83 +16,164 @@ Discover video topics through multi-round research and discussion. This is NOT a
 ```
 User gives direction (can be vague)
      ↓
- ┌─ Round N ──────────────────────┐
- │  ① Research (trends/community) │
- │  ② Analyze (filter + score)    │
- │  ③ Synthesize (structured doc) │
- │  ④ Discuss (present → feedback)│
- └──── not satisfied → Round N+1 ─┘
+ ┌─ Round N ──────────────────────────────┐
+ │  ⓪ AI Capability Baseline (Round 1)    │
+ │  ① Research (trends/community/compete) │
+ │  ② Analyze (filter + score)            │
+ │  ③ Synthesize (structured doc)         │
+ │  ④ Discuss (present + decision points) │
+ └──── not satisfied → Round N+1 ─────────┘
      ↓ satisfied
  Final output: ideation-brief.md
 ```
 
 Each round means **new research** informed by user feedback, **new data**, and **adjusted direction**.
 
+---
+
+## Information Freshness Rules
+
+Different types of information have different shelf lives. Always check and label:
+
+| Category | Shelf Life | Freshness Requirement | Example |
+|----------|-----------|----------------------|---------|
+| **AI model capabilities** | 1-3 months | Must use data from **last 30 days** | "Kling 3.0 supports X" |
+| **Platform policies** | 3-6 months | Must use data from **last 3 months** | "YouTube YPP requires..." |
+| **Market trends / niches** | 6-12 months | Last 6 months acceptable | "Short drama is $8B market" |
+| **Human psychology / storytelling** | Years | Evergreen, no freshness concern | "Suspense hooks retain attention" |
+
+**Rules:**
+- When searching for AI model capabilities, **always add current year+month** to queries
+- When a finding could be outdated, cross-check with a second source dated within 30 days
+- In the brief, tag each claim with its source date: `(source, Feb 2026)` or `(source, 2025 — verify freshness)`
+- **Never assume AI limitations from >3 months ago still apply** — the field moves too fast
+
+---
+
 ## Step-by-Step
 
 ### Round 1: Initial Research
 
 1. **Understand direction** — Ask user for:
-   - Niche / topic area (e.g., "AI tools", "cooking", "fitness")
-   - Target audience (who watches)
-   - Platform (YouTube, TikTok, etc. — default: YouTube)
-   - Any constraints (length, style, existing channel context)
+   - Niche / topic area
+   - Target audience
+   - Platform (default: YouTube)
+   - Any constraints
 
-2. **Run research** — Execute the research layers below
+2. **Run Layer 0: AI Capability Baseline** (see Research Layers)
 
-3. **Produce initial brief** — Write `ideation/brief-v1.md` with:
+3. **Run Layers 1-3: Trend / Community / Competitor research**
+
+4. **Produce initial brief** with:
+   - AI capability summary (what's possible now, what's limited)
    - Research summary (data, not opinions)
-   - 3-5 candidate topics ranked by priority
-   - Hook variants for top picks
-   - Open questions for user
+   - 3-5 candidate topics ranked by score
+   - Decision points with options (see Decision Point Format below)
 
-4. **Discuss** — Present findings, ask for feedback
+5. **Discuss** — Present findings, collect feedback
 
 ### Round 2+: Iterate
 
-Based on user feedback:
-- **"Go deeper on topic X"** → More targeted research on that topic
-- **"Wrong direction"** → Pivot research to new area
-- **"Too broad"** → Narrow down with specific sub-topics
-- **"Add more options"** → Expand search to adjacent areas
-- **"I like #2 but change the angle"** → Rework that specific topic
-
-Each round updates the brief: `ideation/brief-v{N}.md`
+Based on user feedback, run new targeted research and update the brief.
 
 ### Final: Lock Topic
 
-When user approves:
-- Save final brief as `ideation/brief-final.md`
-- This becomes input for `aivp-script`
+When user approves → save `ideation/brief-final.md` → input for `aivp-script`
+
+---
+
+## Decision Point Format
+
+When the brief requires user input, **never ask naked questions**. Every decision point must follow this format:
+
+```markdown
+### Decision: {What needs to be decided}
+
+| Option | Pros | Cons | Data |
+|--------|------|------|------|
+| A: {option} | {pros} | {cons} | {supporting data with source} |
+| B: {option} | {pros} | {cons} | {supporting data with source} |
+| C: {option} | {pros} | {cons} | {supporting data with source} |
+
+**Recommendation:** {Option X} — {one-sentence reason based on data}
+```
+
+The user can then confirm, override, or ask for more research on a specific option.
+
+**Examples of good vs bad:**
+
+❌ Bad: "What language should the videos be in?"
+✅ Good:
+> **Decision: Video language**
+> | Option | Pros | Cons | Data |
+> |--------|------|------|------|
+> | English | Largest audience pool, highest RPM ($3-6) | Most competitive | YouTube global reach |
+> | Chinese | Less competition in AI video niche | Smaller pool, lower RPM | Growing but fragmented |
+> | Multi-language | 2x reach via AI dubbing | Requires multiple channels | Case study: creator doubled views |
+>
+> **Recommendation:** English — largest pool + highest RPM, with multi-language as Phase 2 expansion.
 
 ---
 
 ## Research Layers
 
-> **Architecture note:** All research uses agent-native tools (`web_search`, `web_fetch`).
+> **Architecture:** All research uses agent-native tools (`web_search`, `web_fetch`).
 > Shell scripts are helpers for APIs that work via curl (Hacker News) and data post-processing.
 > Do NOT use curl for Reddit or YouTube — they block automated requests.
+
+### Layer 0: AI Capability Baseline (REQUIRED in Round 1)
+
+**This is the foundation. All topic selection depends on knowing what AI can and cannot produce TODAY.**
+
+Before researching trends or topics, research the current state of AI video generation:
+
+**Search queries (use current month/year):**
+- `AI video generation capabilities {current_month} {current_year}`
+- `best AI video model comparison {current_year}`
+- `{latest_model} review capabilities limitations {current_month} {current_year}`
+- `AI video character consistency {current_year}` (verify — do NOT assume this is still a problem)
+- `AI video generation audio dialogue {current_year}`
+- `AI video length duration limit {current_year}`
+
+**Output a capability matrix:**
+
+| Capability | Status | Best Model(s) | Notes | Source Date |
+|------------|--------|--------------|-------|-------------|
+| Max resolution | ? | ? | | |
+| Max duration per clip | ? | ? | | |
+| Character consistency | ? | ? | | |
+| Lip sync / dialogue | ? | ? | | |
+| Camera motion control | ? | ? | | |
+| Multi-scene coherence | ? | ? | | |
+| Audio generation | ? | ? | | |
+| Emotional expression | ? | ? | | |
+| Action / movement | ? | ? | | |
+| Text rendering in video | ? | ? | | |
+| Style consistency | ? | ? | | |
+
+**Then derive:**
+- **"Green zone"** — content types that current AI does WELL (lean into these for topic selection)
+- **"Yellow zone"** — possible with effort/workarounds
+- **"Red zone"** — still not feasible (avoid these content types)
+
+**This matrix directly constrains topic scoring** — a topic that falls in the Red zone gets Producibility = 1 regardless of demand.
 
 ### Layer 1: Trend Scanning (fast, every round)
 
 **Primary method: `web_search`**
 
-Run these searches (adapt query to niche):
-
 | What | Search Query Pattern | Extract |
 |------|---------------------|---------|
-| YouTube trending | `"{niche}" trending video 2026 site:youtube.com` | Titles, view counts, patterns |
+| YouTube trending | `"{niche}" trending video {current_year} site:youtube.com` | Titles, view counts, patterns |
 | Rising topics | `"{niche}" trending topic this week` | What's getting attention now |
 | Google Trends proxy | `"{niche}" google trends rising` | Rising search terms via reports |
-| Industry news | `"{niche}" news this week 2026` | Recent developments, launches |
-| Viral content | `"{niche}" viral went viral 2026` | What blew up recently |
+| Industry news | `"{niche}" news this week {current_year}` | Recent developments, launches |
+| Viral content | `"{niche}" viral went viral {current_year}` | What blew up recently |
 
 **Secondary method: `scripts/hn-scan.sh`** (for tech/AI/startup niches only)
 
 ```bash
-# Fetch Hacker News top stories filtered by niche keyword
 bash scripts/hn-scan.sh --niche "AI" --limit 10
-bash scripts/hn-scan.sh --niche "AI" --limit 10 --output /tmp/hn-trends.json
 ```
 
 ### Layer 2: Community Research (targeted, when deeper insight needed)
@@ -101,24 +182,9 @@ bash scripts/hn-scan.sh --niche "AI" --limit 10 --output /tmp/hn-trends.json
 
 | Source | How | What to Extract |
 |--------|-----|----------------|
-| Reddit | `web_search` for `site:reddit.com "{niche}" {question}` | Hot discussions, pain points, requests |
-| YouTube comments | `web_search` for top videos → `web_fetch` video pages | "Can you make a video about...", common questions |
-| Forums / Q&A | `web_search` for `site:quora.com "{niche}"` or `site:stackexchange.com` | Unanswered questions, confusion points |
-| Product Hunt | `web_search` for `site:producthunt.com "{niche}" 2026` | New products, tools people are excited about |
-
-**Digging into Reddit threads:**
-```
-1. web_search: "site:reddit.com r/artificial AI video tools"
-2. Pick top 2-3 relevant results
-3. web_fetch each URL → extract post title, top comments, sentiment
-```
-
-**Digging into YouTube:**
-```
-1. web_search: "{niche} tutorial 2026 site:youtube.com"
-2. Note title patterns, view counts from search snippets
-3. Optional: web_fetch a video page for description/comment themes
-```
+| Reddit | `web_search` for `site:reddit.com "{niche}" {question}` | Hot discussions, pain points |
+| YouTube comments | `web_search` for top videos → `web_fetch` pages | Audience requests, questions |
+| Forums / Q&A | `web_search` for `site:quora.com` or `site:stackexchange.com` | Unanswered questions |
 
 ### Layer 3: Competitor Analysis (deep dive, when needed)
 
@@ -126,41 +192,48 @@ bash scripts/hn-scan.sh --niche "AI" --limit 10 --output /tmp/hn-trends.json
 
 | What | How | Output |
 |------|-----|--------|
-| Top channels | `web_search` for `best {niche} YouTube channels 2026` | Channel names, subscriber counts |
-| Recent videos | `web_search` for `site:youtube.com @{channel}` | Recent uploads, title patterns |
-| Performance | `web_search` for channel name + "most popular" | What topics get the most traction |
-| Content gaps | Compare their catalog vs community questions | Topics nobody covers well |
+| Top channels | `web_search` for `best {niche} YouTube channels {current_year}` | Channel names, sizes |
+| Recent videos | `web_search` for `site:youtube.com @{channel}` | Title patterns |
+| Content gaps | Compare catalog vs community questions | Underserved topics |
 
-**Script helper:** `scripts/competitor-scan.sh` (post-processes search results into structured format)
+**Script helper:** `scripts/competitor-scan.sh` (post-processes search results)
 
-```bash
-# After gathering competitor data via web_search, format it:
-bash scripts/competitor-scan.sh --channel "@mkbhd" --data /tmp/competitor-raw.json
-```
+### Layer 4: Platform Policy & Monetization (when relevant)
+
+Research platform-specific rules that affect topic viability:
+
+| What | Search Query Pattern |
+|------|---------------------|
+| Monetization rules | `{platform} monetization policy AI content {current_year}` |
+| Content restrictions | `{platform} demonetization AI generated {current_year}` |
+| Algorithm changes | `{platform} algorithm update {current_year}` |
 
 ---
 
 ## Topic Selection Framework
 
-Every candidate topic must answer these 6 questions:
+Every candidate topic must answer these questions:
 
 | # | Question | Options |
 |---|----------|---------|
-| 1 | **Search or Viral?** | Searchable (SEO, evergreen) / Shareable (viral, trending) / Both |
+| 1 | **Search or Viral?** | Searchable / Shareable / Both |
 | 2 | **Who watches?** | Specific audience segment |
 | 3 | **What's the hook?** | One sentence that stops the scroll |
 | 4 | **Data backing?** | Trend data, search volume, community demand |
-| 5 | **Difficulty (1-5)?** | How hard to produce with AI tools |
+| 5 | **AI feasibility?** | Green / Yellow / Red (from Layer 0 matrix) |
 | 6 | **Shelf life?** | Evergreen / Trending (weeks) / Time-sensitive (days) |
 
 ### Scoring
 
 | Dimension | Weight | 1 (Low) | 5 (High) |
 |-----------|:------:|---------|----------|
-| Demand signal | 30% | No data | Strong trend + community demand |
-| Competition gap | 25% | Saturated | Few good videos exist |
-| Audience fit | 25% | Tangential | Core audience |
-| Producibility | 20% | Needs live footage | Pure AI-producible |
+| Demand signal | 25% | No data | Strong trend + community demand |
+| Competition gap | 20% | Saturated | Few good videos exist |
+| Audience fit | 20% | Tangential | Core audience |
+| AI feasibility | 20% | Red zone | Green zone, plays to AI strengths |
+| Monetization safety | 15% | High demonetization risk | Clearly policy-compliant |
+
+> **Note:** "AI feasibility" replaces the old "Producibility" dimension and is scored based on the Layer 0 capability matrix, not assumptions.
 
 ---
 
@@ -191,37 +264,51 @@ Rules:
 ```markdown
 # Video Ideation Brief — v{N}
 
+## AI Capability Baseline
+### Current Capabilities (as of {date})
+{capability matrix}
+### Green Zone (AI excels)
+{content types that work well}
+### Yellow Zone (possible with effort)
+{content types that need workarounds}
+### Red Zone (not yet feasible)
+{content types to avoid}
+
 ## Research Summary
 ### Trends
-- [data point with source and URL]
+- [data point (source, date)]
 ### Community Signals
-- [what people are asking/discussing, with links]
+- [what people are asking (source, date)]
 ### Competitor Landscape
 - [what's working, what's missing]
+### Platform & Monetization
+- [policy constraints, RPM data]
 
 ## Candidate Topics (ranked)
 
 ### 1. {Title}
 - **Type:** Searchable / Shareable
+- **AI Feasibility:** Green / Yellow — {why, referencing capability matrix}
 - **Hook variants:**
   1. "{hook 1}"
   2. "{hook 2}"
   3. "{hook 3}"
 - **Target audience:** {who}
-- **Data backing:** {evidence with links}
-- **Difficulty:** ⭐⭐⭐ (3/5)
+- **Data backing:** {evidence (source, date)}
 - **Shelf life:** Evergreen
 - **Score:** {weighted score}/5.0
-- **Reference videos:** [{title}]({url}) — {views}
+- **Reference videos:** [{title}]({url})
 
-### 2. {Title}
-...
+## Decision Points
+### Decision: {topic}
+| Option | Pros | Cons | Data |
+|--------|------|------|------|
+| A | ... | ... | ... |
+| B | ... | ... | ... |
+**Recommendation:** ...
 
 ## Changes from v{N-1}
-(What changed and why, based on user feedback)
-
-## Open Questions
-(Decisions the user needs to make)
+(What changed and why)
 ```
 
 ---
@@ -251,6 +338,7 @@ project/
 │   ├── brief-v2.md
 │   ├── brief-final.md       ← Approved final brief
 │   ├── research/
+│   │   ├── ai-capabilities.json  ← Layer 0 output
 │   │   ├── trends.json
 │   │   ├── community.json
 │   │   └── competitors.json
