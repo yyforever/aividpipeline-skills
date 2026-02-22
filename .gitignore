@@ -4,3 +4,6 @@
 output/
 node_modules/
 .reference/
+
+# Reference projects (local only, not tracked)
+.reference/
