@@ -37,7 +37,15 @@
 
 **原则**：每个 skill 必须完整跑一轮实测，用真实场景暴露设计问题，然后迭代。
 
+### 教训 6: 研究数据必须落盘
+**错误**：做了大量 web_search 研究，但数据只存在于聊天上下文中。brief-manage.sh 显示 research/ 目录下三个文件全是 ✗。如果会话结束，除了 brief 什么都不剩，无法复现或追溯。
+
+**修复**：增加 Artifacts & Documentation 章节。要求每轮研究后保存 `round-{N}.md`（搜索记录+关键发现+来源），每次决策后追加 `decision-log.md`。AI 能力基线单独存 `ai-capabilities.md`，30 天内可复用。
+
+**原则**：如果搜了就记录，如果引用了就保存来源。不能存在"只在聊天里"的研究数据。
+
 ## 版本记录
 - v0.2.0: 初始版本（纯模板，curl 脚本）
 - v0.3.0: 转为 agent 原生研究，修复脚本
-- v0.4.0: 增加 Layer 0、Decision Point Format、Freshness Rules（本轮修复）
+- v0.4.0: 增加 Layer 0、Decision Point Format、Freshness Rules
+- v0.5.0: 增加 Artifacts & Documentation（研究落盘、决策日志、AI 基线复用）

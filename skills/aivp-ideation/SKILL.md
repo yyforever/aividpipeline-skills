@@ -3,7 +3,7 @@ name: aivp-ideation
 description: Video topic ideation through iterative research — AI capability assessment, trend scanning, community research, competitor analysis, and hook generation. Activate on "video ideas", "trending topics", "content ideas", "what should I make a video about", or any ideation request.
 metadata:
   author: aividpipeline
-  version: "0.4.0"
+  version: "0.5.0"
   tags: ideation, trending, topics, research, content-strategy, hooks
 ---
 
@@ -329,20 +329,74 @@ Store in `ideation/analytics.json` for reference in future rounds.
 
 ---
 
+## Artifacts & Documentation
+
+Every round of research must produce **persistent artifacts**, not just chat output. If the session ends, anyone picking up should be able to reconstruct the full context from files alone.
+
+### Required artifacts (save after each round)
+
+| Artifact | Path | Format | When |
+|----------|------|--------|------|
+| AI capability baseline | `ideation/research/ai-capabilities.md` | Capability matrix + Green/Yellow/Red zones | Round 1, update if models change |
+| Research raw data | `ideation/research/round-{N}.md` | Searches performed, key findings with source+date, quotes | Every round |
+| Decision log | `ideation/decision-log.md` | Each decision: options presented → user choice → reasoning | Append after each user confirmation |
+| Brief versions | `ideation/brief-v{N}.md` | Full brief per SKILL format | Every round |
+| Final brief | `ideation/brief-final.md` | Locked version | After user final approval |
+
+### AI Capability Baseline persistence
+The Layer 0 output (`ai-capabilities.md`) is reusable across ideation sessions. **Check its date before re-researching** — if < 30 days old, reuse; if > 30 days, refresh.
+
+### Decision Log format
+```markdown
+# Ideation Decision Log
+
+## Round 1 — {date}
+### Direction
+- User input: {what they said}
+
+### Decision: {topic}
+- Options presented: A / B / C
+- User chose: {X}
+- Reasoning: {why}
+
+## Round 2 — {date}
+### Decision: {topic}
+...
+```
+
+### Research data format (`round-{N}.md`)
+```markdown
+# Research Round {N} — {date}
+
+## Searches Performed
+1. `{query}` → {N results}, top findings: ...
+2. `{query}` → ...
+
+## Key Findings
+- {finding} (source, date)
+- {finding} (source, date)
+
+## Sources Consulted
+- [{title}]({url}) — {date} — {what was extracted}
+```
+
+**Rule: No research should exist only in chat.** If you searched it, log it. If you cited it, save the source.
+
 ## Project Directory
 
 ```
 project/
 ├── ideation/
-│   ├── brief-v1.md
-│   ├── brief-v2.md
-│   ├── brief-final.md       ← Approved final brief
+│   ├── brief-v1.md              ← Round 1 output
+│   ├── brief-v2.md              ← Round 2 output
+│   ├── brief-final.md           ← Approved final brief
+│   ├── decision-log.md          ← All decisions with context
 │   ├── research/
-│   │   ├── ai-capabilities.json  ← Layer 0 output
-│   │   ├── trends.json
-│   │   ├── community.json
-│   │   └── competitors.json
-│   └── analytics.json       ← Post-publish performance
+│   │   ├── ai-capabilities.md   ← Layer 0 (reusable <30 days)
+│   │   ├── round-1.md           ← Round 1 searches & findings
+│   │   ├── round-2.md           ← Round 2 searches & findings
+│   │   └── ...
+│   └── analytics.json           ← Post-publish performance data
 └── ...
 ```
 
