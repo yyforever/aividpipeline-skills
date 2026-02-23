@@ -16,6 +16,13 @@ Use this structure for every `brief-v{N}.md`.
 ### Red Zone (not yet feasible)
 {content types to avoid}
 
+### Recommended Model Stack
+- **Primary video model:** {model name + version}
+- **Backup video model:** {model name + version}
+- **Key capabilities:** {what the primary model does well}
+- **Key limitations:** {what to avoid}
+- **Detail source:** `notes/ai-capabilities.md`
+
 ## Research Summary
 ### Trends
 - {data point} (source, date)
@@ -50,6 +57,58 @@ Use this structure for every `brief-v{N}.md`.
 **Recommendation:** {Option X} — {reason based on data}
 ```
 
-## Brief-Final
+---
 
-When user approves the last version, save as `brief-final.md`. This is the sole deliverable passed to `aivp-script`.
+## Brief-Final Format
+
+When user approves the last version, save as `brief-final.md` using this **confirmed** format (not the ranked-candidates format above):
+
+```markdown
+# Brief Final — Locked
+
+## Core Concept
+- **Title:** {confirmed title}
+- **Logline:** {one-sentence story/concept summary}
+
+## Format
+- **Platform:** {YouTube / TikTok / etc}
+- **Duration:** {e.g., 8-12 minutes per episode + 60s Shorts}
+- **Episodes:** {Pilot / Series of N}
+- **Language:** {English / Chinese / etc}
+
+## Genre & Tone
+- **Primary:** {genre}
+- **Sub-genre:** {if any}
+- **Tone:** {3-4 adjectives}
+- **Reference vibes:** {e.g., "Black Mirror meets The Social Dilemma"}
+
+## Target Audience
+- {age range, interests, platform behavior}
+
+## Production Approach
+- **Primary video model:** {from AI Capability Baseline}
+- **Backup video model:** {from AI Capability Baseline}
+- **Workflow:** {Full AI / Hybrid}
+- **Budget:** {per episode estimate}
+- **Production time:** {per episode estimate}
+- **AI capability detail:** see `notes/ai-capabilities.md`
+
+## Hook Strategy
+- {opening hook description}
+- {title/thumbnail angle}
+- {Shorts teaser moment}
+
+## Key Constraints
+- Max {N} locations per episode
+- Max {N} main characters
+- {other constraints from AI capabilities / budget}
+
+## Confirmed Technical Settings
+- {model-specific settings — max duration, multi-shot support, etc.}
+- {character consistency approach}
+- {pacing rules}
+```
+
+**This is the sole deliverable passed to `aivp-script`.** The script skill reads this file to extract direction, tone, genre, audience, model choice, and production constraints.
+
+**Important:** `notes/ai-capabilities.md` is a shared reference — both ideation and script may read it for detailed model capabilities beyond what brief-final summarizes.

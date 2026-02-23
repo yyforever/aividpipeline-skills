@@ -109,5 +109,31 @@ project/ideation/
 ## Integration
 
 - **Input from:** User direction, previous `analytics.json`
-- **Output to:** `aivp-script` (approved `brief-final.md`)
+- **Output to:** `aivp-script` reads:
+  - `ideation/brief-final.md` — confirmed direction, format, genre, model, constraints (see `references/brief-template.md` for final format)
+  - `ideation/notes/ai-capabilities.md` — detailed AI model capability matrix (shared reference)
 - **Feedback from:** `aivp-publish` (video analytics → next ideation round)
+
+### Project Directory Convention
+
+All skills operate under a shared project root:
+
+```
+project/
+├── ideation/         ← aivp-ideation owns this
+│   ├── plan.md
+│   ├── notes/
+│   └── brief-final.md
+├── script/           ← aivp-script owns this
+│   ├── plan.md
+│   ├── notes/
+│   ├── characters/
+│   ├── scenes/
+│   ├── script-final.md
+│   └── prompts-final.md
+├── storyboard/       ← aivp-storyboard (future)
+├── image/            ← aivp-image (future)
+└── ...
+```
+
+Each skill reads from upstream sibling directories and writes only to its own.

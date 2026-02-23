@@ -34,9 +34,10 @@ Create plan.md (from assets/plan-template.md)
 
 ### Setup
 
-1. **Read input** — Load `ideation/brief-final.md` for direction, tone, genre, audience
-2. **Create `script/plan.md`** — Copy `assets/plan-template.md`
-3. **Read format references** — Load `references/micro-drama-structure.md` for genre-specific rules
+1. **Read input** — Load `ideation/brief-final.md` for direction, tone, genre, audience, model choice, constraints
+2. **Read AI capabilities** — Load `ideation/notes/ai-capabilities.md` for detailed model limits (max duration, character consistency, etc.)
+3. **Create `script/plan.md`** — Copy `assets/plan-template.md`
+4. **Read format references** — Load `references/micro-drama-structure.md` for genre-specific rules
 
 ### Step 1: Characters & Scenes
 
@@ -138,7 +139,9 @@ project/script/
 
 ## Integration
 
-- **Input from:** `aivp-ideation` → `ideation/brief-final.md`
+- **Input from:** `aivp-ideation` →
+  - `ideation/brief-final.md` — confirmed direction, format, genre, model, constraints
+  - `ideation/notes/ai-capabilities.md` — detailed AI model capability matrix (shared reference)
 - **Output to:**
   - `aivp-storyboard` → `script-final.md` + `scenes/*.md` (scene breakdown + location visuals)
   - `aivp-image` → `characters/*.md` + `scenes/*.md` (character portraits + scene backgrounds)
