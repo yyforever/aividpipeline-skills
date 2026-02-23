@@ -114,6 +114,7 @@ Generate two output formats per shot:
 
 **For aivp-video** (clip generation):
 - Motion prompt (model-specific: Kling 3.0 / Seedance 2.0 format)
+- For Seedance 2.0: read `references/seedance2-guide.md` for time-axis storyboard format, @ reference syntax, and the eight rules
 - Input frames (first-frame only for small; first + last for medium/large)
 - Duration, camera movement keywords
 - Audio cues (dialogue timing, bgm, sfx)
@@ -174,6 +175,7 @@ project/storyboard/
 - **Variation system** → `references/variation-system.md` — small/medium/large classification, generation strategy per type
 - **Frame planning** → `references/frame-planning.md` — Generation order, reference image selection, character portrait angle matching
 - **Production specs** → `references/production-specs.md` — Output formats for aivp-image and aivp-video, model-specific prompt syntax
+- **Seedance 2.0 guide** → `references/seedance2-guide.md` — Seedance 2.0 专用分镜格式、运镜关键词、八大铁律、@素材引用、shot spec→提示词转换
 - **Visual continuity** → `references/visual-continuity.md` — Cross-shot consistency checks, character tracking, environment consistency
 - **Quality checks** → `references/quality-checks.md` — Storyboard-specific validation checklist
 
