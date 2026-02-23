@@ -24,6 +24,9 @@ Run these checks before presenting each draft to the user.
 - [ ] **Duration feasibility** — Is each shot ≤ 15 seconds? (Kling 3.0 max)
 - [ ] **Shot count feasibility** — ≤ 6 shots per multi-shot prompt? (Kling 3.0 max)
 - [ ] **Audio tags** — Are dialogue lines in correct `[Character: Role, tone]: "text"` format?
+- [ ] **Variation type labeled** — Every shot has `small`/`medium`/`large` tag?
+- [ ] **Frame decomposition** — medium/large shots have both first-frame and last-frame descriptions?
+- [ ] **First-frame describes static state** — No motion verbs in first-frame descriptions?
 
 ## Micro-Drama Specific
 

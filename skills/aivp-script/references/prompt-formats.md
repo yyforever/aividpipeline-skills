@@ -110,6 +110,50 @@ Camera: follows from behind, then orbits to face.
 
 ---
 
+## Shot Decomposition (from ViMax architecture)
+
+Each shot should be decomposed into **static snapshot pair + motion instruction**. This aligns with how video models actually work (first-frame → last-frame interpolation).
+
+### Variation Type
+
+Label every shot with a change magnitude:
+
+| Type | Meaning | Reference Images | Video Model Mode |
+|------|---------|:----------------:|-----------------|
+| `small` | Subtle motion (expression change, slight turn) | 1 (first frame only) | First-Frame-to-Video |
+| `medium` | Moderate change (character moves, gesture) | 2 (first + last frame) | First+Last-Frame-to-Video |
+| `large` | Major change (new character enters, scene shift) | 2 (first + last frame) | First+Last-Frame-to-Video |
+
+### Frame Decomposition per Shot
+
+```markdown
+**Shot 1.1** (5s) | variation: small
+- First frame: "Medium close-up, woman sitting at desk, pen in hand, warm lamplight, neutral expression"
+- Last frame: (auto — small variation, model interpolates)
+- Motion: "She slowly looks up from the paper, eyebrows furrowing"
+- Audio: [Character A: Writer, quiet whisper]: "This can't be right..."
+```
+
+```markdown
+**Shot 2.3** (6s) | variation: large
+- First frame: "Wide shot, empty hallway, cold fluorescent light, polished floor"
+- Last frame: "Same hallway, man in black coat now visible at far end, standing still"
+- Motion: "Camera slowly dollies forward, figure gradually becomes visible"
+- Audio: ambient hum, footstep echo
+```
+
+### Frame Types (from Huobao architecture)
+
+When more granular control is needed:
+
+| Type | Purpose | When to Use |
+|------|---------|------------|
+| `first` | Static state before action begins | Every shot |
+| `key` | Peak tension / emotional climax moment | High-emotion shots |
+| `last` | Final state after action completes | medium/large variation shots |
+
+---
+
 ## Prompt-per-Scene Output Format
 
 When generating prompts-v{N}.md, use this structure:
@@ -134,3 +178,18 @@ When generating prompts-v{N}.md, use this structure:
 ```
 
 Each shot prompt must be **self-contained** — copyable directly into the model's input.
+
+### Full Shot Entry Example
+
+```markdown
+**Shot 2.1** (5s) | variation: medium | frame: first+last
+- First frame: "Close-up, woman's hand gripping a crumpled letter, 
+  knuckles white, warm side lighting from window"
+- Last frame: "Same close-up, hand now open, letter falling, 
+  fingers trembling"
+- Motion: "Hand slowly unclenches, letter slips and begins to fall"
+- Camera: static, shallow depth of field
+- Character refs: @CharA (hand only)
+- Audio: paper rustling, sharp exhale
+- [Character A: Elena, barely audible]: "It was all a lie."
+```

@@ -62,17 +62,18 @@ Key rules:
 
 ### Step 3: Technical Prompts
 
-For each scene in the narrative, generate AI video model prompts. Read `references/prompt-formats.md` for model-specific syntax.
+For each scene in the narrative, generate AI video model prompts. Read `references/prompt-formats.md` for model-specific syntax, shot decomposition, and variation types.
 
 Each shot prompt includes:
-- Shot type + framing
-- Subject action + motion description
-- Emotional state + facial expression
-- Lighting / atmosphere
-- Camera movement (explicit, not vague)
-- Duration
+- **Variation type** — small/medium/large (determines reference frame count)
+- **First-frame description** — static snapshot of scene start (no motion verbs)
+- **Last-frame description** — static snapshot of scene end (medium/large only)
+- **Motion description** — what changes between first and last frame
+- Shot type + framing + camera movement (explicit, not vague)
+- Emotional state + lighting / atmosphere
+- Duration (≤ 15s per shot)
 - Audio/dialogue tags (if native audio)
-- Character reference tags
+- Character reference tags (use prompt anchor phrase from character sheet)
 
 ### Step 4: Quality Checks
 

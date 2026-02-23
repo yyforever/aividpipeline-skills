@@ -64,6 +64,28 @@ For longer formats (8-12 min YouTube episodes), target a spike every **60-90 sec
 | Arrival | Unexpected person appears | ⭐⭐⭐ |
 | Discovery | Character finds hidden object/message | ⭐⭐⭐⭐ |
 
+## Emotion Intensity Markers (from Huobao architecture)
+
+Use alongside beat markers for fine-grained emotional pacing:
+
+| Marker | Intensity | Example |
+|:------:|-----------|---------|
+| ↑↑↑ | Extreme | Betrayal reveal, violent confrontation |
+| ↑↑ | Strong | Major reversal, confession |
+| ↑ | Moderate | Suspicion confirmed, important discovery |
+| → | Neutral | Transition, establishing context |
+| ↓ | Low/release | Aftermath, brief calm before next storm |
+
+In the pacing map, combine with beat markers:
+
+```
+[0:00]  🔴 HOOK ↑↑↑ — open mid-crisis
+[0:15]  🟡 BUILD →  — establish stakes
+[1:00]  🟢 PEAK ↑↑  — first reversal
+[2:30]  🟢 PEAK ↑↑↑ — betrayal revealed
+[3:30]  🔵 RELEASE ↓ — brief aftermath
+```
+
 ## Dialogue Compression
 
 Every line must do at least one of:

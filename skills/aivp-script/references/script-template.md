@@ -72,8 +72,22 @@
 ## Key Formatting Rules
 
 - **VISUAL blocks** describe what the camera sees — written for the human reader, NOT as AI prompts (prompts go in prompts-v{N}.md)
-- **Dialogue** always includes tone in parentheses — this feeds into both video prompt dialogue tags and TTS voice direction
-- **ACTION blocks** describe physical movement — important for translating to video prompt motion descriptions
+- **Dialogue** always includes tone in parentheses — feeds into video prompt dialogue tags AND TTS voice direction
+- **ACTION blocks** describe physical movement — translates to video prompt motion descriptions
 - **Emotional beat markers** (🔴🟡🟢🔵) must appear at every scene head — used in quality checks
-- **TRANSITION** notes guide the editor but also inform prompt sequencing
-- **Pacing map** at the end = quick validation that the emotional rhythm is correct
+- **TRANSITION** notes guide the editor and inform prompt sequencing
+- **Pacing map** at the end = quick validation of emotional rhythm
+
+## Shot-Level Annotations
+
+When writing VISUAL and ACTION blocks, annotate with **variation type** to guide technical prompt generation:
+
+```markdown
+> VISUAL: [var:small] Close-up of Elena's face, soft lamplight.
+> ACTION: [var:medium] She reaches for the phone, hand trembling, then pulls back.
+> VISUAL: [var:large] Door bursts open, Marcus stands in the doorway silhouetted against hallway light.
+```
+
+These `[var:X]` tags are stripped in the narrative output but used when generating technical prompts to determine:
+- How many reference frames to generate (1 for small, 2 for medium/large)
+- Which video model mode to use (see `references/prompt-formats.md`)
