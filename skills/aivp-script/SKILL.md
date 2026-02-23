@@ -19,7 +19,7 @@ Read brief-final.md (from aivp-ideation)
 Create plan.md (from assets/plan-template.md)
      ↓
  ┌─ Round N ────────────────────────────────┐
- │  ① Define/refine characters               │
+ │  ① Define/refine characters & scenes      │
  │  ② Write narrative script                  │
  │  ③ Generate technical prompts per shot     │
  │  ④ Run quality checks                      │
@@ -27,7 +27,7 @@ Create plan.md (from assets/plan-template.md)
  │  ⑥ Update plan.md                          │
  └──── revisions needed → Round N+1 ──────────┘
      ↓ approved
- Save script-final.md + prompts-final.md + characters/ → done
+ Save script-final + prompts-final + characters/ + scenes/ → done
 ```
 
 ## Workflow
