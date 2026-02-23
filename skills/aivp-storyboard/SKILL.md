@@ -1,149 +1,205 @@
 ---
 name: aivp-storyboard
-description: Design visual storyboards and shot lists for AI video production. Use when the user requests "Create storyboard", "Shot list", "Visual plan", "Scene breakdown", or similar visual planning tasks.
+description: Convert scripts into production-ready storyboards with camera tree, frame generation plan, and visual continuity. Activate on "create storyboard", "shot breakdown", "visual plan", "scene breakdown", "storyboard from script", or any visual planning request after script is written.
 metadata:
   author: aividpipeline
-  version: "0.1.0"
-  tags: storyboard, shot-list, visual-planning, cinematography, camera
+  version: "0.5.0"
+  tags: storyboard, camera-tree, shot-decomposition, frame-plan, visual-continuity
 ---
 
-# AIVP Storyboard — Visual Planning & Shot Design
+# AIVP Storyboard — Camera-Aware Visual Production Planning
 
-Convert scripts into detailed storyboards with shot-by-shot specifications. Output is optimized for `aivp-image` (keyframe generation) and `aivp-video` (clip generation).
+Transform scripts into production-ready storyboards. The core innovations beyond simple shot lists:
 
-## When to Use
+1. **Camera Tree** — spatial hierarchy of camera positions for visual consistency (from ViMax)
+2. **3-tuple shot decomposition** — first-frame + last-frame + motion per shot (from ViMax/STAGE)
+3. **Frame generation plan** — ordered instructions for aivp-image with reference image selection
+4. **Visual continuity validation** — cross-shot character/environment consistency checks
 
-- After script is written, before image/video generation
-- User needs a visual plan for their video
-- User wants to define camera angles, compositions, and visual style
+This is an iterative process: storyboard-v1 → discuss → revise → storyboard-final.
 
-## Output Format
-
-Storyboards are output as structured JSON:
-
-```json
-{
-  "project": "morning-habits",
-  "style_guide": {
-    "color_palette": "warm golden, soft whites, deep navy",
-    "visual_style": "cinematic, shallow depth of field",
-    "aspect_ratio": "16:9",
-    "reference_images": []
-  },
-  "shots": [
-    {
-      "shot_id": "01",
-      "scene_id": "01",
-      "shot_type": "wide",
-      "camera_angle": "low_angle",
-      "camera_movement": "slow_tilt_up",
-      "subject": "City skyline at sunrise",
-      "composition": "Rule of thirds, sun on right intersection point",
-      "lighting": "Golden hour, warm backlight",
-      "prompt": "Cinematic wide shot, city skyline at sunrise, golden hour, warm light, low angle slowly tilting up, photorealistic, 16:9",
-      "duration": "5s",
-      "narration_sync": "Every morning, before the world wakes up..."
-    },
-    {
-      "shot_id": "02",
-      "scene_id": "01",
-      "shot_type": "close_up",
-      "camera_angle": "eye_level",
-      "camera_movement": "static",
-      "subject": "Alarm clock showing 5:30 AM",
-      "composition": "Center frame, shallow DOF, bedside table",
-      "lighting": "Soft morning light from window",
-      "prompt": "Close-up of alarm clock showing 5:30 AM, soft morning light, shallow depth of field, warm tones, photorealistic",
-      "duration": "3s",
-      "narration_sync": "...the most successful people have already started their day."
-    }
-  ]
-}
-```
-
-## Shot Types
-
-| Type | Description | Use For |
-|------|-------------|---------|
-| `extreme_wide` | Vast landscape/environment | Establishing shots |
-| `wide` | Full scene with environment | Scene setting |
-| `medium` | Subject waist-up | Dialogue, action |
-| `close_up` | Face or object detail | Emotion, detail |
-| `extreme_close_up` | Eyes, hands, texture | Dramatic emphasis |
-| `over_shoulder` | From behind one subject | Conversations |
-| `pov` | First-person perspective | Immersion |
-
-## Camera Movements
-
-| Movement | Description |
-|----------|-------------|
-| `static` | No movement |
-| `slow_pan_left/right` | Horizontal rotation |
-| `slow_tilt_up/down` | Vertical rotation |
-| `dolly_in/out` | Move toward/away |
-| `tracking` | Follow subject |
-| `crane_up/down` | Vertical elevation |
-| `orbit` | Circle around subject |
-
-## Camera Angles
-
-| Angle | Effect |
-|-------|--------|
-| `eye_level` | Neutral, natural |
-| `low_angle` | Power, grandeur |
-| `high_angle` | Vulnerability, overview |
-| `bird_eye` | God's view, context |
-| `dutch_angle` | Tension, unease |
-
-## Usage
-
-This skill is primarily LLM-driven. The agent converts scripts to storyboards.
-
-### Prompt Template
+## Core Process
 
 ```
-Convert this script to a storyboard:
-[paste script JSON or text]
-
-For each scene, create 2-4 shots with:
-- shot_id, scene_id
-- shot_type, camera_angle, camera_movement
-- subject, composition, lighting
-- prompt (optimized for AI image/video generation)
-- duration
-- narration_sync (which narration text plays during this shot)
-
-Also define a style_guide with color palette, visual style, and aspect ratio.
-Output as JSON following the aivp-storyboard schema.
+Read script outputs (script-final + prompts-final + characters/ + scenes/)
+     ↓
+Create plan.md (from assets/plan-template.md)
+     ↓
+ ┌─ Round N ──────────────────────────────────┐
+ │  ① Audit & refine shot decompositions       │
+ │  ② Build camera tree                        │
+ │  ③ Plan frame generation order + references │
+ │  ④ Write production specs per shot          │
+ │  ⑤ Run quality checks                       │
+ │  ⑥ Present to user with revision notes      │
+ │  ⑦ Update plan.md                           │
+ └──── revisions needed → Round N+1 ───────────┘
+     ↓ approved
+ Save storyboard-final/ → done
 ```
 
-## Integration with AIVP Pipeline
+## Workflow
+
+### Setup
+
+1. **Read script outputs** — Load from sibling `script/` directory:
+   - `script/script-final.md` — narrative screenplay
+   - `script/prompts-final.md` — per-shot technical prompts with structured metadata
+   - `script/characters/*.md` — character sheets (static/dynamic features, prompt anchors)
+   - `script/scenes/*.md` — scene sheets (background prompts, lighting)
+2. **Read AI capabilities** — Load `ideation/notes/ai-capabilities.md` for model limits
+3. **Create `storyboard/plan.md`** — Copy `assets/plan-template.md`
+
+### Step 1: Audit & Refine Shot Decompositions
+
+Read `references/shot-decomposition.md` for rules.
+
+For each shot in `prompts-final.md`, validate and refine:
+
+- **First-frame description** — Must be a pure static snapshot (no motion verbs)
+- **Last-frame description** — Must reflect final state after all motion (medium/large variation only)
+- **Motion description** — Must use visual appearance, never character names
+- **Variation type** — Classify as small/medium/large per `references/variation-system.md`
+- **Audio layer** — dialogue + bgm + sfx all present
+
+Save refined decompositions to `storyboard/shots/shot-{NN}.md` using format from `references/shot-spec-format.md`.
+
+### Step 2: Build Camera Tree
+
+Read `references/camera-tree-guide.md`.
+
+The Camera Tree is a spatial hierarchy of camera positions. Key concepts:
+
+- **Camera position** = a unique combination of location + framing + angle
+- **Parent-child** = parent camera's frame spatially contains child camera's content
+- **Reuse cameras** — only introduce new position when framing differs significantly
+
+Process:
+1. Group shots by scene location
+2. Within each scene, identify distinct camera positions
+3. Assign `cam_idx` to each shot
+4. Build parent-child relationships (wider shot → tighter shot)
+5. Mark `is_parent_fully_covers_child` and `missing_info` per relationship
+
+Save to `storyboard/camera-tree.md`.
+
+### Step 3: Frame Generation Plan
+
+Read `references/frame-planning.md`.
+
+Plan the order and method for generating each frame image:
+
+1. **Generation order** follows Camera Tree (parent cameras first, then children)
+2. **Reference image selection** per frame:
+   - Character portraits (front/side/back based on facing direction)
+   - Scene background (from scene sheets)
+   - Prior frames from same camera position (temporal consistency)
+   - Parent camera frames (spatial consistency via transition)
+3. **Variation-based strategy**:
+   - `small` → generate first-frame only (video model interpolates)
+   - `medium/large` → generate first-frame + last-frame
+
+Save to `storyboard/frame-plan.md`.
+
+### Step 4: Production Specs
+
+Read `references/production-specs.md`.
+
+Generate two output formats per shot:
+
+**For aivp-image** (keyframe generation):
+- Frame description (ff_desc / lf_desc) — self-contained, no cross-references
+- Reference image list with roles (character portrait, scene bg, prior frame)
+- Target resolution and aspect ratio
+
+**For aivp-video** (clip generation):
+- Motion prompt (model-specific: Kling 3.0 / Seedance 2.0 format)
+- Input frames (first-frame only for small; first + last for medium/large)
+- Duration, camera movement keywords
+- Audio cues (dialogue timing, bgm, sfx)
+
+Save combined specs to `storyboard/storyboard-v{N}.md`.
+
+### Step 5: Quality Checks
+
+Read `references/quality-checks.md` and verify. Save results to `storyboard/notes/round-{N}.md`.
+
+### Step 6: Present & Iterate
+
+Show user: visual summary (shot count, camera positions, duration) + key shots + quality results.
+Collect feedback → revise → next round.
+
+### Final: Lock
+
+When approved → save all to `storyboard/storyboard-final/` directory:
+- `storyboard-final/storyboard.md` — complete storyboard document
+- `storyboard-final/camera-tree.md` — finalized camera tree
+- `storyboard-final/frame-plan.md` — finalized generation plan
+- `storyboard-final/shots/shot-{NN}.md` — per-shot production specs
+
+Mark plan complete.
+
+## Project Output Structure
 
 ```
-aivp-script → aivp-storyboard → aivp-image (generate keyframes from prompts)
-                               → aivp-video (generate clips from prompts)
+project/storyboard/
+├── plan.md                          ← PLAN: track progress + decisions
+├── notes/                           ← NOTES: revision feedback
+│   └── round-1.md
+├── camera-tree.md                   ← Working camera tree
+├── frame-plan.md                    ← Working frame generation plan
+├── shots/                           ← Per-shot specs (working)
+│   ├── shot-01.md
+│   └── shot-02.md
+├── storyboard-v1.md                 ← Working version
+└── storyboard-final/                ← DELIVERABLE: approved output
+    ├── storyboard.md
+    ├── camera-tree.md
+    ├── frame-plan.md
+    └── shots/
+        ├── shot-01.md
+        └── shot-02.md
 ```
+
+| Layer | Files | Purpose |
+|-------|-------|---------|
+| Plan | `plan.md` | Track rounds, decisions, revision notes |
+| Notes | `notes/*.md` | Quality check results, user feedback |
+| Deliverables | `storyboard-final/` | Complete production specs for downstream |
+
+## References (load as needed)
+
+- **Camera tree guide** → `references/camera-tree-guide.md` — Spatial hierarchy construction, parent-child relationships, transition generation
+- **Shot decomposition** → `references/shot-decomposition.md` — 3-tuple rules (ff/lf/motion), static snapshot requirements, motion description conventions
+- **Variation system** → `references/variation-system.md` — small/medium/large classification, generation strategy per type
+- **Frame planning** → `references/frame-planning.md` — Generation order, reference image selection, character portrait angle matching
+- **Production specs** → `references/production-specs.md` — Output formats for aivp-image and aivp-video, model-specific prompt syntax
+- **Visual continuity** → `references/visual-continuity.md` — Cross-shot consistency checks, character tracking, environment consistency
+- **Quality checks** → `references/quality-checks.md` — Storyboard-specific validation checklist
+
+## Integration
+
+- **Input from:** `aivp-script` →
+  - `script/script-final.md` — narrative screenplay
+  - `script/prompts-final.md` — per-shot technical prompts with structured metadata
+  - `script/characters/*.md` — character sheets (static/dynamic features, multi-angle portrait guide)
+  - `script/scenes/*.md` — scene sheets (background prompts, lighting)
+  - `ideation/notes/ai-capabilities.md` — AI model capability matrix (shared reference)
+- **Output to:**
+  - `aivp-image` → `storyboard-final/frame-plan.md` + `storyboard-final/shots/*.md` (what to generate, in what order, with what references)
+  - `aivp-video` → `storyboard-final/shots/*.md` (motion prompts, input frames, duration, audio cues)
+  - `aivp-audio` → `storyboard-final/storyboard.md` (dialogue timing, BGM transitions, SFX placement)
 
 ### Project Directory Convention
 
 ```
 project/
-├── script.json
-├── storyboard.json       ← this skill's output
-└── keyframes/
-    ├── shot_01.png        ← generated from storyboard prompts
-    └── shot_02.png
+├── ideation/          ← aivp-ideation owns
+├── script/            ← aivp-script owns
+├── storyboard/        ← aivp-storyboard owns (this skill)
+├── image/             ← aivp-image (future)
+├── video/             ← aivp-video (future)
+└── audio/             ← aivp-audio (future)
 ```
 
-## Tips
-
-1. **2-4 shots per scene** — enough variety without over-complicating
-2. **Vary shot types** — alternate wide/medium/close-up for visual rhythm
-3. **Camera movement = video prompt** — "slow zoom in" directly maps to AI video prompt
-4. **Prompt field is the key output** — this text goes directly into aivp-image and aivp-video
-5. **Duration per shot: 3-10 seconds** — matches AI video model output lengths
-
-## References
-
-- [references/shot-language.md](references/shot-language.md) — Complete cinematography vocabulary
-- [references/templates.md](references/templates.md) — Storyboard templates by video type
+Each skill reads from upstream sibling directories and writes only to its own.
