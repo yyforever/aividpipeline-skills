@@ -39,3 +39,11 @@
 - 三层输出（plan/notes/deliverable）需要实际跑一遍才能验证路径是否合理
 - 8 个文件，总 31KB — 合理范围
 - characters/ 目录作为独立 deliverable 很清晰，下游 skill 可以直接读取
+
+### 教训 8: Skill 间接口必须显式定义
+- **上游模板必须包含下游需要的所有字段** — ideation 的 brief-template 原来缺了 platform/duration/language/model/constraints，script 根本拿不到这些信息
+- **brief-vN（候选排名）和 brief-final（确认方向）是两种不同格式** — 必须分别定义模板
+- **共享资源要显式标注** — ai-capabilities.md 是 ideation 和 script 共享的，但之前只有 ideation 知道它存在
+- **项目目录约定必须写在文档里** — `project/ideation/` + `project/script/` 等，每个 skill 只写自己的目录
+- **plan-template 的字段要跨 skill 一致** — 日期列这种小细节也会造成不一致
+- **检查接口的方法：列出上游输出的每个字段，逐一检查下游是否能消费到**
