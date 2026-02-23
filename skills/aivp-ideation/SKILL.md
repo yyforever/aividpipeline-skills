@@ -131,9 +131,12 @@ project/
 │   ├── scenes/
 │   ├── script-final.md
 │   └── prompts-final.md
-├── storyboard/       ← aivp-storyboard (future)
+├── storyboard/       ← aivp-storyboard owns this
 ├── image/            ← aivp-image (future)
-└── ...
+├── video/            ← aivp-video (future)
+└── audio/            ← aivp-audio (future)
 ```
+
+> **Full pipeline**: `ideation → script → storyboard → {image, video, audio} → edit → publish`
 
 Each skill reads from upstream sibling directories and writes only to its own.

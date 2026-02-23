@@ -7,7 +7,7 @@ description: Generate video scripts with dual output — narrative screenplay an
 
 Generate scripts with two synchronized outputs:
 - **Narrative layer** — human-readable screenplay (dialogue, emotion, pacing)
-- **Technical layer** — per-shot prompts ready for AI video generation (Kling 3.0 / Seedance 2.0 format)
+- **Technical layer** — per-shot prompts ready for AI video generation (Seedance 2.0 primary, Kling 3.0 as fallback)
 
 This is an iterative process: script-v1 → discuss → revise → script-final.
 
@@ -53,7 +53,7 @@ Define all characters and scene locations before writing. Read `references/chara
 - Environment, lighting, atmosphere, color palette
 - Scene background prompt (no people — character-free for compositing)
 
-Characters and scenes are reused by downstream skills (aivp-image, aivp-video, aivp-audio).
+Characters and scenes are reused by downstream skills (via aivp-storyboard → aivp-image, aivp-video, aivp-audio).
 
 ### Step 2: Narrative Script
 
@@ -65,9 +65,11 @@ Key rules:
 - Mark emotional pacing: 🔴 hook / 🟡 build / 🟢 peak / 🔵 release
 - End every episode/segment with a cliffhanger
 
-### Step 3: Technical Prompts
+### Step 3: Technical Prompts (Initial Draft)
 
 For each scene, generate AI video model prompts. Read `references/prompt-formats.md` for syntax and `references/storyboard-guidelines.md` for the 10 composition rules.
+
+> **Note**: These technical prompts are an initial draft. `aivp-storyboard` will audit, refine, add Camera Tree, plan frame generation order, and convert to Seedance 2.0 production format. Focus here on getting the CONTENT right (what happens in each shot); storyboard will handle the HOW (spatial relationships, generation order, model-specific formatting).
 
 Each shot has **structured metadata** (not buried in prose):
 - `variation` (small/medium/large), `shot_type`, `angle`, `movement`, `duration`, `emotion`
@@ -142,8 +144,11 @@ project/script/
 - **Input from:** `aivp-ideation` →
   - `ideation/brief-final.md` — confirmed direction, format, genre, model, constraints
   - `ideation/notes/ai-capabilities.md` — detailed AI model capability matrix (shared reference)
-- **Output to:**
-  - `aivp-storyboard` → `script-final.md` + `scenes/*.md` (scene breakdown + location visuals)
-  - `aivp-image` → `characters/*.md` + `scenes/*.md` (character portraits + scene backgrounds)
-  - `aivp-video` → `prompts-final.md` (per-shot generation prompts with structured metadata)
-  - `aivp-audio` → `script-final.md` (dialogue + BGM cues + SFX descriptions + voice profiles)
+- **Output to:** `aivp-storyboard` (sole downstream consumer) →
+  - `script/script-final.md` — approved narrative screenplay (dialogue, emotion, pacing)
+  - `script/prompts-final.md` — per-shot technical prompts with structured metadata (shot decomposition initial draft)
+  - `script/characters/*.md` — character sheets (static/dynamic features, multi-angle portrait guide, prompt anchors)
+  - `script/scenes/*.md` — scene sheets (background prompts, lighting, color palette)
+
+> **Pipeline flow**: `ideation → script → storyboard → {image, video, audio}`
+> Script does NOT output directly to image/video/audio. Storyboard is the authoritative production spec layer that refines script's shot decompositions, adds Camera Tree + Frame Plan, and converts to Seedance 2.0 format.
