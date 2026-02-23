@@ -3,7 +3,7 @@ name: aivp-storyboard
 description: Convert scripts into production-ready storyboards with camera tree, frame generation plan, and visual continuity. Activate on "create storyboard", "shot breakdown", "visual plan", "scene breakdown", "storyboard from script", or any visual planning request after script is written.
 metadata:
   author: aividpipeline
-  version: "0.5.0"
+  version: "0.6.0"
   tags: storyboard, camera-tree, shot-decomposition, frame-plan, visual-continuity
 ---
 
@@ -62,7 +62,7 @@ For each shot in `prompts-final.md`, validate and refine:
 - **Variation type** — Classify as small/medium/large per `references/variation-system.md`
 - **Audio layer** — dialogue + bgm + sfx all present
 
-Save refined decompositions to `storyboard/shots/shot-{NN}.md` using format from `references/shot-spec-format.md`.
+Save refined decompositions to `storyboard/shots/shot-{NN}.md` using format from `assets/shot-spec-template.md`.
 
 ### Step 2: Build Camera Tree
 
@@ -113,7 +113,7 @@ Generate two output formats per shot:
 - Target resolution and aspect ratio
 
 **For aivp-video** (clip generation):
-- Motion prompt (model-specific: Kling 3.0 / Seedance 2.0 format)
+- Motion prompt (Seedance 2.0 primary format; Kling 3.0 as optional fallback)
 - For Seedance 2.0: read `references/seedance2-guide.md` for time-axis storyboard format, @ reference syntax, and the eight rules
 - Input frames (first-frame only for small; first + last for medium/large)
 - Duration, camera movement keywords

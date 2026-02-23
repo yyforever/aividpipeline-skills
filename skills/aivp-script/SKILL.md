@@ -87,7 +87,7 @@ Each shot has **three-layer audio**:
 
 Read `references/quality-checks.md` and verify. Save results to `script/notes/round-{N}.md`.
 - [ ] Hook window (first 15 seconds grabs attention)
-- [ ] Emotional pacing (spike every 40-60 seconds)
+- [ ] Emotional pacing (spike every 60-90 seconds)
 - [ ] Cliffhanger strength (each segment ends with unresolved tension)
 - [ ] Scene count ≤ 5 locations per episode
 - [ ] Dialogue compression (no filler lines)
