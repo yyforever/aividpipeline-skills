@@ -31,17 +31,15 @@ Master Prompt: A tense confrontation in a dimly lit kitchen late at night.
 
 Multi-shot Prompt 1: Medium shot, a woman sets down a plate too hard,
 ceramic clinks sharply. Warm overhead light, shadows on walls.
-[Character A: Exhausted Partner, trembling frustrated voice]:
-"You never listen to me." (Duration: 5s)
+[Elena, trembling frustrated voice]: "You never listen to me." (Duration: 5s)
 
 Multi-shot Prompt 2: Close-up reaction, the other partner turns around,
 eyes wide. Camera holds steady.
-[Character B: Defensive Partner, shouting loudly]:
-"Because you never stop blaming!" (Duration: 4s)
+[Marco, shouting loudly]: "Because you never stop blaming!" (Duration: 4s)
 
 Multi-shot Prompt 3: Medium two-shot, both visible.
-Exhausted Partner exhales shakily.
-[Exhausted Partner, voice cracking]: "I'm not blaming… I'm begging."
+Elena exhales shakily.
+[Elena, voice cracking]: "I'm not blaming… I'm begging."
 Silence. Sad piano chord enters quietly. (Duration: 6s)
 ```
 
@@ -110,13 +108,41 @@ Camera: follows from behind, then orbits to face.
 
 ---
 
-## Shot Decomposition (from ViMax architecture)
+## Structured Shot Metadata
 
-Each shot should be decomposed into **static snapshot pair + motion instruction**. This aligns with how video models actually work (first-frame → last-frame interpolation).
+Every shot in `prompts-v{N}.md` must include these structured fields (not buried in prose):
+
+### Required Metadata Per Shot
+
+| Field | Values | Purpose |
+|-------|--------|---------|
+| `variation` | small / medium / large | Determines ref image count |
+| `shot_type` | ELS / LS / MS / MCU / CU / ECU | Framing — 远景/全景/中景/中近景/近景/特写 |
+| `angle` | eye-level / low / high / dutch / overhead | Camera angle |
+| `movement` | static / push / pull / pan / track / follow / crane | Camera movement |
+| `duration` | 3-15s | Shot length |
+| `emotion` | ↑↑↑ / ↑↑ / ↑ / → / ↓ | Intensity marker |
+| `characters` | [@Name, facing:direction] | Who is visible + which way they face |
+| `scene_ref` | scene slug | Links to scene sheet |
+| `is_primary` | true/false | Is this the establishing shot for this scene? |
+
+### Three-Layer Audio
+
+Every shot has three audio fields:
+
+| Field | Content | Downstream |
+|-------|---------|-----------|
+| `dialogue` | `[Name, tone]: "text"` or `(none)` | aivp-video (native) + aivp-audio (TTS) |
+| `bgm` | Music description or `(continue)` | aivp-audio (music generation) |
+| `sfx` | Sound effects description or `(none)` | aivp-audio (foley/SFX) |
+
+---
+
+## Shot Decomposition
+
+Each shot decomposes into **static snapshot pair + motion instruction**, matching how video models work (first-frame → last-frame interpolation).
 
 ### Variation Type
-
-Label every shot with a change magnitude:
 
 | Type | Meaning | Reference Images | Video Model Mode |
 |------|---------|:----------------:|-----------------|
@@ -124,27 +150,7 @@ Label every shot with a change magnitude:
 | `medium` | Moderate change (character moves, gesture) | 2 (first + last frame) | First+Last-Frame-to-Video |
 | `large` | Major change (new character enters, scene shift) | 2 (first + last frame) | First+Last-Frame-to-Video |
 
-### Frame Decomposition per Shot
-
-```markdown
-**Shot 1.1** (5s) | variation: small
-- First frame: "Medium close-up, woman sitting at desk, pen in hand, warm lamplight, neutral expression"
-- Last frame: (auto — small variation, model interpolates)
-- Motion: "She slowly looks up from the paper, eyebrows furrowing"
-- Audio: [Character A: Writer, quiet whisper]: "This can't be right..."
-```
-
-```markdown
-**Shot 2.3** (6s) | variation: large
-- First frame: "Wide shot, empty hallway, cold fluorescent light, polished floor"
-- Last frame: "Same hallway, man in black coat now visible at far end, standing still"
-- Motion: "Camera slowly dollies forward, figure gradually becomes visible"
-- Audio: ambient hum, footstep echo
-```
-
-### Frame Types (from Huobao architecture)
-
-When more granular control is needed:
+### Frame Types
 
 | Type | Purpose | When to Use |
 |------|---------|------------|
@@ -152,59 +158,64 @@ When more granular control is needed:
 | `key` | Peak tension / emotional climax moment | High-emotion shots |
 | `last` | Final state after action completes | medium/large variation shots |
 
+### Motion Description Rules (from ViMax)
+
+- **No character names in motion_desc** — use visual appearance instead
+  - ❌ "Maya walks to the door"
+  - ✅ "The woman in the gray blazer with blue-light glasses walks to the door"
+- Why: video models don't understand character names, only visual descriptions
+- Character names go in the `characters` metadata field, not in motion text
+
+### Character Visibility Tracking
+
+Track which characters are visible in first-frame vs last-frame:
+
+```markdown
+- Characters (first frame): [@Maya, facing:camera], [@Ravi, facing:away]
+- Characters (last frame): [@Maya, facing:camera]  ← Ravi has exited
+```
+
+This tells aivp-image exactly which character portraits to composite into each frame.
+
 ---
 
 ## Dual Output Format
 
-Technical prompts have two complementary formats per scene. Both go in `prompts-v{N}.md`:
+Technical prompts have two complementary formats per scene in `prompts-v{N}.md`:
 
 ### 1. Shot Decomposition (for aivp-image + aivp-storyboard)
 
-Frame-level breakdown — used to generate reference images and plan visual continuity:
-
 ```markdown
-**Shot 1.1** (5s) | variation: small | frame: first
-- First frame: "static scene description for image generation"
-- Last frame: (auto / "static end-state description")
-- Motion: "what changes between first and last frame"
-- Camera: movement description
-- Character refs: @CharA
-- Audio: description or dialogue tag
+**Shot 2.1** (5s) | var:medium | CU | eye-level | static | ↑↑
+- Scene: office-corner
+- Characters (ff): [@Elena, facing:camera, hand only]
+- Characters (lf): [@Elena, facing:camera, hand open]
+- First frame: "Close-up of woman's hand gripping a crumpled letter,
+  knuckles white, warm side lighting from window"
+- Last frame: "Same close-up, hand now open, letter mid-fall,
+  fingers trembling slightly"
+- Motion: "The hand in gray blazer sleeve slowly unclenches,
+  letter slips and begins to fall"
+- Dialogue: [Elena, barely audible]: "It was all a lie."
+- BGM: (continue — tense strings from previous shot)
+- SFX: paper rustling, sharp exhale
 ```
 
 ### 2. Multi-Shot Prompts (for aivp-video — Kling 3.0)
 
-Grouped prompts ready to paste into Kling's multi-shot input:
-
 ```markdown
-Master Prompt: {scene context}
+Master Prompt: {scene context — location, lighting, mood}
 
-Multi-shot Prompt 1: {shot description}
+Multi-shot Prompt 1: {shot description with visual appearance, not names}
 [Character Name, tone]: "dialogue" (Duration: Xs)
 
-Multi-shot Prompt 2: {shot description}
-[Character Name, tone]: "dialogue" (Duration: Xs)
+Multi-shot Prompt 2: ...
 ```
 
 **Rules for multi-shot groups:**
 - Max 6 shots per group (Kling limit)
-- Dialogue-heavy scenes → group by conversation beat
-- Action-heavy scenes → group by continuous motion sequence
-- Master Prompt sets the shared context (location, lighting, mood)
+- Dialogue-heavy → group by conversation beat
+- Action-heavy → group by continuous motion sequence
+- Master Prompt = shared context (location, lighting, mood)
 
 Both formats cover the same scenes — decomposition is the detailed spec, multi-shot is the production-ready input. They must stay in sync.
-
-### Full Shot Entry Example
-
-```markdown
-**Shot 2.1** (5s) | variation: medium | frame: first+last
-- First frame: "Close-up, woman's hand gripping a crumpled letter, 
-  knuckles white, warm side lighting from window"
-- Last frame: "Same close-up, hand now open, letter falling, 
-  fingers trembling"
-- Motion: "Hand slowly unclenches, letter slips and begins to fall"
-- Camera: static, shallow depth of field
-- Character refs: @CharA (hand only)
-- Audio: paper rustling, sharp exhale
-- [Character A: Elena, barely audible]: "It was all a lie."
-```

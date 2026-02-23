@@ -74,20 +74,23 @@
 - **VISUAL blocks** describe what the camera sees — written for the human reader, NOT as AI prompts (prompts go in prompts-v{N}.md)
 - **Dialogue** always includes tone in parentheses — feeds into video prompt dialogue tags AND TTS voice direction
 - **ACTION blocks** describe physical movement — translates to video prompt motion descriptions
-- **Emotional beat markers** (🔴🟡🟢🔵) must appear at every scene head — used in quality checks
+- **SOUND blocks** describe non-dialogue audio — BGM cues and sound effects
+- **Emotional beat markers** (🔴🟡🟢🔵) + intensity (↑↑↑/↑↑/↑/→/↓) at every scene head
 - **TRANSITION** notes guide the editor and inform prompt sequencing
 - **Pacing map** at the end = quick validation of emotional rhythm
 
 ## Shot-Level Annotations
 
-When writing VISUAL and ACTION blocks, annotate with **variation type** to guide technical prompt generation:
+When writing VISUAL and ACTION blocks, annotate with structured metadata:
 
 ```markdown
-> VISUAL: [var:small] Close-up of Elena's face, soft lamplight.
-> ACTION: [var:medium] She reaches for the phone, hand trembling, then pulls back.
-> VISUAL: [var:large] Door bursts open, Marcus stands in the doorway silhouetted against hallway light.
+> VISUAL: [var:small | CU | eye-level | static] Close-up of Elena's face, soft lamplight.
+> ACTION: [var:medium | MS | eye-level | static] She reaches for the phone, hand trembling, then pulls back.
+> VISUAL: [var:large | LS | low | static] Door bursts open, Marcus stands in the doorway silhouetted against hallway light.
+> SOUND: [bgm] Tense strings swell. [sfx] Door slam echoes.
 ```
 
-These `[var:X]` tags are stripped in the narrative output but used when generating technical prompts to determine:
-- How many reference frames to generate (1 for small, 2 for medium/large)
-- Which video model mode to use (see `references/prompt-formats.md`)
+Annotation format: `[var:X | shot_type | angle | movement]`
+- These tags are used when generating technical prompts
+- `var:X` determines reference frame count (1 for small, 2 for medium/large)
+- Shot type/angle/movement map directly to structured metadata in prompts-v{N}.md

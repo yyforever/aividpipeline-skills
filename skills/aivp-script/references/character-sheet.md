@@ -1,8 +1,8 @@
 # Character Sheet Template
 
 Define every character BEFORE writing scenes. These sheets are reused by:
-- `aivp-image` — generate consistent reference images
-- `aivp-video` — character anchoring in Kling 3.0 Omni / Seedance 2.0
+- `aivp-image` — generate consistent reference images (multi-angle portraits)
+- `aivp-video` — character anchoring in Kling 3.0 / Seedance 2.0
 - `aivp-audio` — voice profile for TTS
 
 ## Template
@@ -14,14 +14,22 @@ Define every character BEFORE writing scenes. These sheets are reused by:
 - **Function:** Protagonist / Antagonist / Supporting
 - **Core conflict (4 words):** {e.g., "vengeful bride vs cheating fiancé"}
 
-## Visual Appearance
+## Static Features (immutable across all scenes)
 - **Age:** {range, e.g., late 20s}
+- **Gender:** {for prompt clarity}
 - **Build:** {slim / athletic / heavy}
+- **Height:** {relative — tallest / medium / shortest of cast}
 - **Hair:** {color, length, style}
 - **Skin:** {tone}
-- **Clothing style:** {e.g., always in dark formal wear / casual streetwear}
-- **Visual tell:** {distinguishing mark for instant recognition — ring, scar, tattoo, specific accessory}
+- **Face:** {key distinguishing facial features}
+- **Visual tell:** {distinguishing mark — ring, scar, tattoo, specific accessory}
 - **Silhouette test:** {can this character be identified from silhouette alone?}
+
+## Dynamic Features (may change per scene)
+- **Default outfit:** {primary clothing for most scenes}
+- **Alt outfits:** {list if character changes clothes — max 2 per episode}
+- **Accessories:** {items that appear/disappear}
+- **Grooming state:** {e.g., starts clean-shaven, later has stubble}
 
 ## Voice Profile
 - **Tone:** {warm / cold / gravelly / smooth}
@@ -29,18 +37,27 @@ Define every character BEFORE writing scenes. These sheets are reused by:
 - **Speech pattern:** {short sentences / formal / slang-heavy / whispers}
 - **Emotional range:** {controlled → explosive / always calm / nervous energy}
 
+## Multi-Angle Portrait Guide
+Downstream aivp-image generates 3 standard portraits per character:
+1. **Front** (full-body, neutral pose) — generated first from text description
+2. **Side** (full-body, 3/4 angle) — generated using front portrait as reference
+3. **Back** (full-body, rear view) — generated using front portrait as reference
+
+Generation order matters: front is the anchor, side/back must reference it.
+
 ## Prompt Anchor Phrase
-A single-paragraph description for use as character reference in AI video prompts:
+A single-paragraph description using ONLY static features + default outfit. This exact text is copied into every shot prompt featuring this character:
 
-> "{Age} {gender} with {hair} and {build}, wearing {clothing}. {Visual tell}. Expression: {default emotional state}."
+> "{Age} {gender} with {hair} and {build}, wearing {default outfit}. {Visual tell}. Expression: {default emotional state}."
 
-Example:
-> "Late-20s woman with shoulder-length dark hair and athletic build, wearing a tailored black coat. A thin scar runs along her left jawline. Expression: composed but watchful."
+For scenes with alt outfits, append: "In this scene wearing {alt outfit}" after the anchor phrase.
 ```
 
 ## Rules
 
+- **Static/dynamic split is mandatory** — static features never change, dynamic features are scene-specific
 - **Visual tell is mandatory** — without it, characters blur together in AI-generated video
-- **Prompt anchor phrase must be consistent** — copy the exact same text into every shot prompt featuring this character
-- Keep clothing changes minimal (1-2 outfits max per episode) for AI consistency
-- If two characters appear together, their silhouettes must be distinctly different (height, build, hair, clothing contrast)
+- **Prompt anchor phrase uses static features only** — dynamic changes are appended per-scene
+- **Silhouettes must be distinct** — when two characters appear together, height + build + hair + clothing must contrast
+- Keep outfit changes minimal (1-2 per episode) for AI consistency
+- **Face direction default** — note which way character typically faces (important for multi-angle portraits)

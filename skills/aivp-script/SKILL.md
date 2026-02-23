@@ -38,17 +38,21 @@ Create plan.md (from assets/plan-template.md)
 2. **Create `script/plan.md`** — Copy `assets/plan-template.md`
 3. **Read format references** — Load `references/micro-drama-structure.md` for genre-specific rules
 
-### Step 1: Character Definition
+### Step 1: Characters & Scenes
 
-Before writing any scenes, define all characters. Read `references/character-sheet.md` for template.
+Define all characters and scene locations before writing. Read `references/character-sheet.md` and `references/scene-sheet.md`.
 
-Save each character to `script/characters/{name}.md`:
-- Visual appearance (hair, build, clothing style, distinguishing mark)
-- Voice profile (tone, accent, speech pattern)
-- Core conflict (4 words: "vengeful bride vs cheating fiancé")
-- Visual "tell" (ring, scar, twitch — for instant recognition)
+**Characters** → save to `script/characters/{name}.md`:
+- Static features (face, build, hair — immutable) vs dynamic features (outfit, accessories — per-scene)
+- Voice profile, core conflict (4 words), visual tell
+- Multi-angle portrait guide (front/side/back generation order for aivp-image)
+- Prompt anchor phrase (static features only)
 
-Characters are reused by downstream skills (aivp-image, aivp-video) for consistency.
+**Scenes** → save to `script/scenes/{location-slug}.md`:
+- Environment, lighting, atmosphere, color palette
+- Scene background prompt (no people — character-free for compositing)
+
+Characters and scenes are reused by downstream skills (aivp-image, aivp-video, aivp-audio).
 
 ### Step 2: Narrative Script
 
@@ -62,18 +66,19 @@ Key rules:
 
 ### Step 3: Technical Prompts
 
-For each scene in the narrative, generate AI video model prompts. Read `references/prompt-formats.md` for model-specific syntax, shot decomposition, and variation types.
+For each scene, generate AI video model prompts. Read `references/prompt-formats.md` for syntax and `references/storyboard-guidelines.md` for the 10 composition rules.
 
-Each shot prompt includes:
-- **Variation type** — small/medium/large (determines reference frame count)
-- **First-frame description** — static snapshot of scene start (no motion verbs)
-- **Last-frame description** — static snapshot of scene end (medium/large only)
-- **Motion description** — what changes between first and last frame
-- Shot type + framing + camera movement (explicit, not vague)
-- Emotional state + lighting / atmosphere
-- Duration (≤ 15s per shot)
-- Audio/dialogue tags (if native audio)
-- Character reference tags (use prompt anchor phrase from character sheet)
+Each shot has **structured metadata** (not buried in prose):
+- `variation` (small/medium/large), `shot_type`, `angle`, `movement`, `duration`, `emotion`
+- `characters` with facing direction — tracked per first-frame and last-frame
+- `scene_ref` linking to scene sheet
+- Frame decomposition: first-frame (static) + last-frame (static, medium/large only) + motion
+- **Motion text uses visual descriptions, not character names** (video models don't know names)
+
+Each shot has **three-layer audio**:
+- `dialogue`: `[Name, tone]: "text"` or `(none)`
+- `bgm`: music cue or `(continue)`
+- `sfx`: concrete sound effects or `(none)`
 
 ### Step 4: Quality Checks
 
@@ -94,7 +99,7 @@ Collect feedback → revise → next round.
 
 ### Final: Lock
 
-When approved → save `script-final.md` + `prompts-final.md` + `characters/*.md` → mark plan complete.
+When approved → save `script-final.md` + `prompts-final.md` + `characters/*.md` + `scenes/*.md` → mark plan complete.
 
 ## Project Output Structure
 
@@ -106,6 +111,9 @@ project/script/
 ├── characters/                ← DELIVERABLE: character definitions
 │   ├── character-a.md
 │   └── character-b.md
+├── scenes/                    ← DELIVERABLE: scene/location definitions
+│   ├── location-a.md
+│   └── location-b.md
 ├── script-v1.md               ← Working versions (narrative)
 ├── prompts-v1.md              ← Working versions (technical)
 ├── script-final.md            ← DELIVERABLE: approved narrative script
@@ -116,21 +124,23 @@ project/script/
 |-------|-------|---------|
 | Plan | `plan.md` | Track rounds, decisions, revision notes |
 | Notes | `notes/*.md` | User feedback, research for revisions |
-| Deliverables | `script-final.md`, `prompts-final.md`, `characters/` | Downstream input |
+| Deliverables | `script-final.md`, `prompts-final.md`, `characters/`, `scenes/` | Downstream input |
 
 ## References (load as needed)
 
-- **Micro-drama structure** → `references/micro-drama-structure.md` — Hook window, pacing rules, cliffhanger patterns, scene constraints
-- **Prompt formats** → `references/prompt-formats.md` — Kling 3.0 and Seedance 2.0 prompt syntax with examples
-- **Character sheet template** → `references/character-sheet.md` — Visual/voice/conflict definition
-- **Script template** → `references/script-template.md` — Full narrative script structure
-- **Quality checks** → `references/quality-checks.md` — Pre-delivery validation checklist
+- **Micro-drama structure** → `references/micro-drama-structure.md` — Hook window, pacing rules, cliffhanger patterns
+- **Prompt formats** → `references/prompt-formats.md` — Model syntax, structured metadata, shot decomposition, audio layers
+- **Storyboard guidelines** → `references/storyboard-guidelines.md` — 10 composition rules, shot type selection, angle psychology
+- **Character sheet** → `references/character-sheet.md` — Static/dynamic features, multi-angle portraits, prompt anchor
+- **Scene sheet** → `references/scene-sheet.md` — Location definition, background prompts, lighting
+- **Script template** → `references/script-template.md` — Full narrative script structure with annotations
+- **Quality checks** → `references/quality-checks.md` — 30+ validation items across 6 categories
 
 ## Integration
 
 - **Input from:** `aivp-ideation` → `ideation/brief-final.md`
 - **Output to:**
-  - `aivp-storyboard` → `script-final.md` (scene breakdown)
-  - `aivp-image` → `characters/*.md` (character reference generation)
-  - `aivp-video` → `prompts-final.md` (per-shot generation prompts)
-  - `aivp-audio` → `script-final.md` (narration/dialogue text + voice profiles)
+  - `aivp-storyboard` → `script-final.md` + `scenes/*.md` (scene breakdown + location visuals)
+  - `aivp-image` → `characters/*.md` + `scenes/*.md` (character portraits + scene backgrounds)
+  - `aivp-video` → `prompts-final.md` (per-shot generation prompts with structured metadata)
+  - `aivp-audio` → `script-final.md` (dialogue + BGM cues + SFX descriptions + voice profiles)
