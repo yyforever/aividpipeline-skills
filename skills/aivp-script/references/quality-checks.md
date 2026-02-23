@@ -23,10 +23,12 @@ Run these checks before presenting each draft to the user.
 - [ ] **Motion specificity** — Are camera movements explicit (not "camera moves" but "slow tracking right")?
 - [ ] **Duration feasibility** — Is each shot ≤ 15 seconds? (Kling 3.0 max)
 - [ ] **Shot count feasibility** — ≤ 6 shots per multi-shot prompt? (Kling 3.0 max)
-- [ ] **Audio tags** — Are dialogue lines in correct `[Character: Role, tone]: "text"` format?
+- [ ] **Audio tags** — Are dialogue lines in correct `[Character Name, tone]: "text"` format? Name must match character sheet exactly.
 - [ ] **Variation type labeled** — Every shot has `small`/`medium`/`large` tag?
 - [ ] **Frame decomposition** — medium/large shots have both first-frame and last-frame descriptions?
 - [ ] **First-frame describes static state** — No motion verbs in first-frame descriptions?
+- [ ] **Last-frame describes static state** — No motion verbs in last-frame either (use "standing mid-stride" not "walking")?
+- [ ] **Dual format sync** — Shot decomposition and multi-shot prompts cover same scenes, same shot count?
 
 ## Micro-Drama Specific
 

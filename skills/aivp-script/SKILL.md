@@ -77,7 +77,7 @@ Each shot prompt includes:
 
 ### Step 4: Quality Checks
 
-Read `references/quality-checks.md` and verify:
+Read `references/quality-checks.md` and verify. Save results to `script/notes/round-{N}.md`.
 - [ ] Hook window (first 15 seconds grabs attention)
 - [ ] Emotional pacing (spike every 40-60 seconds)
 - [ ] Cliffhanger strength (each segment ends with unresolved tension)

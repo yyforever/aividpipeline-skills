@@ -50,7 +50,7 @@ Silence. Sad piano chord enters quietly. (Duration: 6s)
 - **Anchor subjects early** — define characters at prompt start, keep descriptions consistent across shots
 - **Explicit motion** — "slowly tracking right" not "camera moves"
 - **Cinematic vocabulary** — profile shot, macro close-up, tracking shot, POV, shot-reverse-shot
-- **Dialogue format:** `[Character A: Role, tone description]: "dialogue text"`
+- **Dialogue format:** `[Character Name, tone description]: "dialogue text"` — name must match character sheet exactly
 - **Tone keywords in dialogue tags** improve output: controlled, trembling, whispering, shouting
 - **Max 6 shots** per generation, **max 15s** per shot
 - **Duration tag** at end of each shot
@@ -154,30 +154,45 @@ When more granular control is needed:
 
 ---
 
-## Prompt-per-Scene Output Format
+## Dual Output Format
 
-When generating prompts-v{N}.md, use this structure:
+Technical prompts have two complementary formats per scene. Both go in `prompts-v{N}.md`:
+
+### 1. Shot Decomposition (for aivp-image + aivp-storyboard)
+
+Frame-level breakdown — used to generate reference images and plan visual continuity:
 
 ```markdown
-# Technical Prompts — v{N}
-
-## Target Model: Kling 3.0 / Seedance 2.0
-
-### Scene 1: {scene title from narrative}
-
-**Shot 1.1** (5s)
-{full prompt text}
-- Character refs: @CharA, @CharB
-- Audio: native dialogue / silent + TTS later
-
-**Shot 1.2** (4s)
-{full prompt text}
-
-### Scene 2: {scene title}
-...
+**Shot 1.1** (5s) | variation: small | frame: first
+- First frame: "static scene description for image generation"
+- Last frame: (auto / "static end-state description")
+- Motion: "what changes between first and last frame"
+- Camera: movement description
+- Character refs: @CharA
+- Audio: description or dialogue tag
 ```
 
-Each shot prompt must be **self-contained** — copyable directly into the model's input.
+### 2. Multi-Shot Prompts (for aivp-video — Kling 3.0)
+
+Grouped prompts ready to paste into Kling's multi-shot input:
+
+```markdown
+Master Prompt: {scene context}
+
+Multi-shot Prompt 1: {shot description}
+[Character Name, tone]: "dialogue" (Duration: Xs)
+
+Multi-shot Prompt 2: {shot description}
+[Character Name, tone]: "dialogue" (Duration: Xs)
+```
+
+**Rules for multi-shot groups:**
+- Max 6 shots per group (Kling limit)
+- Dialogue-heavy scenes → group by conversation beat
+- Action-heavy scenes → group by continuous motion sequence
+- Master Prompt sets the shared context (location, lighting, mood)
+
+Both formats cover the same scenes — decomposition is the detailed spec, multi-shot is the production-ready input. They must stay in sync.
 
 ### Full Shot Entry Example
 
