@@ -10,7 +10,7 @@
 
 ## Target
 
-- Video model: [Kling 3.0 / Seedance 2.0 / Veo 3.1]
+- Video model: [Seedance 2.0 / Kling 3.0 / Veo 3.1]
 - Target duration: [Ns]
 - Aspect ratio: [16:9 / 9:16 / 1:1]
 

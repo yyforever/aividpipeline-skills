@@ -48,10 +48,10 @@ Run these checks before presenting each draft to the user.
 - [ ] **Dual format present** — Every shot has both image spec AND video prompt
 - [ ] **Image spec complete** — Generation mode, references, prompt, resolution all specified
 - [ ] **Video prompt complete** — Motion prompt, input frames, duration, audio cues all present
-- [ ] **Model-specific syntax** — Prompts follow target model's format (Kling 3.0 / Seedance 2.0)
-- [ ] **Duration specified** — Every shot has duration in seconds (3-15s range)
+- [ ] **Model-specific syntax** — Prompts follow target model's format (Seedance 2.0 primary / Kling 3.0 fallback)
+- [ ] **Duration specified** — Every shot has duration in seconds (3-15s range; Seedance max 15s, Kling max 10s)
 - [ ] **Audio layers present** — dialogue + bgm + sfx for every shot (even if "(none)")
-- [ ] **Multi-shot groups valid** — ≤ 6 shots per group for Kling 3.0; no cross-scene groups
+- [ ] **Multi-shot groups valid** — Seedance: ≤ 4 lens switches per generation; Kling: ≤ 6 shots per group, no cross-scene
 
 ## Pacing & Rhythm Checks
 

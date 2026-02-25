@@ -37,8 +37,8 @@ Run these checks before presenting each draft to the user.
 - [ ] **Structured metadata** — Does every shot have: variation, shot_type, angle, movement, duration, emotion?
 - [ ] **Character consistency** — Do prompt descriptions match character sheets exactly? (prompt anchor phrase)
 - [ ] **Motion specificity** — Are camera movements explicit (not "camera moves" but "slow tracking right")?
-- [ ] **Duration feasibility** — Is each shot ≤ 15 seconds? (Kling 3.0 max)
-- [ ] **Shot count feasibility** — ≤ 6 shots per multi-shot prompt? (Kling 3.0 max)
+- [ ] **Duration feasibility** — Is each shot ≤ 15 seconds? (Seedance 2.0 max)
+- [ ] **Shot count feasibility** — Kling: ≤ 6 shots per multi-shot group; Seedance: ≤ 4 lens switches per generation
 - [ ] **Audio tags** — Are dialogue lines in correct `[Character Name, tone]: "text"` format?
 - [ ] **Variation type labeled** — Every shot has `small`/`medium`/`large` tag?
 - [ ] **Frame decomposition** — medium/large shots have both first-frame and last-frame descriptions?

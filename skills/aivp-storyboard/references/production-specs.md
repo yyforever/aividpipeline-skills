@@ -81,18 +81,25 @@ Each shot produces two output specs — one for aivp-image (keyframe generation)
 
 **Input frames**: first-frame only (small variation)
 
-**Motion prompt** (Kling 3.0 format):
+**Motion prompt** (Seedance 2.0 format — primary):
+> 【整体描述】
+> 电影写实风格，5秒，16:9横屏，紧张压抑的室内氛围
+>
+> 【分镜描述】
+> 0-2秒：近景固定机位，灰色西装外套女人的手紧握一封皱巴巴的信，指关节发白
+> 2-5秒：手指缓缓松开，信纸从颤抖的指间缓缓滑落，女人轻声说"这一切都是假的"
+>
+> 【声音说明】
+> 紧张弦乐持续铺底，纸张摩擦声
+>
+> 角色面部稳定不变形，动作自然流畅，4K超高清，电影质感，画面稳定
+
+**Motion prompt** (Kling 3.0 format — fallback):
 > [Camera: static, close-up, eye-level]
 > The woman's hand slowly unclenches, crumpled letter slipping from trembling fingers.
 > Warm side lighting. Shallow depth of field.
 > [Elena, barely audible]: "It was all a lie."
 > (Duration: 5s)
-
-**Motion prompt** (Seedance 2.0 format):
-> The auburn-haired woman's hand gently releases its grip on the crumpled letter.
-> Her fingers tremble slightly as the paper begins to slip.
-> Camera: static close-up.
-> Warm cinematic lighting, shallow depth of field.
 
 **Parameters**:
 - Duration: 5s
@@ -103,40 +110,37 @@ Each shot produces two output specs — one for aivp-image (keyframe generation)
 
 ## Model-Specific Prompt Guidelines
 
-### Kling 3.0 (Kuaishou)
+### Seedance 2.0 (ByteDance) — Primary
 
-Structure:
+Structure (time-axis storyboard format):
 ```
-[Camera: {movement}, {shot_type}, {angle}]
-{Subject action using visual appearance, not names}
-{Lighting/atmosphere}
-[Character Name, tone]: "dialogue" (for lip sync)
-(Duration: {N}s)
-```
+【整体描述】
+{风格} + {时长}秒 + {画面比例} + {整体氛围/色调}
 
-Key rules:
-- Anchor subjects early in prompt
-- Explicit camera movement keywords: "slowly tracking right", "static", "dolly in"
-- Dialogue format: `[Character Name, tone]: "text"` (name needed for lip sync assignment)
-- Max 6 shots per multi-shot group, max 15s per shot
-- Tone keywords in dialogue tags improve output quality
+【分镜描述】
+0-Xs：{景别}{运镜}，{画面内容}，{主体动作}，{光影效果}
+X-Ys：...
 
-### Seedance 2.0 (ByteDance)
+【声音说明】
+{配乐风格} + {音效} + {对白/旁白}
 
-Structure:
-```
-{Subject motion with degree adverbs}
-Camera: {movement keyword}
-{Scene/atmosphere}
+【参考素材说明】（如有）
+@图片1 作为角色形象参考
+@图片2 作为场景风格参考
+
+角色面部稳定不变形，动作自然流畅，4K超高清，电影质感，画面稳定
 ```
 
 Key rules:
 - **Degree adverbs are critical**: "slowly", "gently", "violently", not just the verb
-- "Lens switch" keyword triggers multi-shot within one generation
+- **"Lens switch"** keyword triggers multi-shot within one generation
 - No negative prompts (describe what you WANT)
 - Camera keywords: surround, aerial, zoom, pan, follow, handheld
 - For moving camera: select "unfixed camera" in parameters
 - Gentle motion words for smooth results: slow, gentle, continuous, natural, smooth
+- **Max duration:** 15s per generation
+- **Quality suffix:** always append "4K, 超高清, 细节丰富, 电影质感, 画面稳定"
+- **Character constraint:** append "角色面部稳定不变形，动作自然流畅" when people present
 
 ### Seedance 2.0 Reference Modes
 
@@ -155,14 +159,25 @@ The woman's hand gently releases the letter.
 Cinematic lighting, shallow depth of field.
 ```
 
-### Veo 3.1 (Google)
+### Kling 3.0 (Kuaishou) — Fallback
 
-- Supports first-frame and first+last-frame input
-- Excellent at interpreting cinematic vocabulary
-- Native audio generation — dialogue prompts can include voice tone descriptions
-- Up to 2K resolution output
+Structure:
+```
+[Camera: {movement}, {shot_type}, {angle}]
+{Subject action using visual appearance, not names}
+{Lighting/atmosphere}
+[Character Name, tone]: "dialogue" (for lip sync)
+(Duration: {N}s)
+```
 
-## Multi-Shot Grouping
+Key rules:
+- Anchor subjects early in prompt
+- Explicit camera movement keywords: "slowly tracking right", "static", "dolly in"
+- Dialogue format: `[Character Name, tone]: "text"` (name needed for lip sync assignment)
+- Max 6 shots per multi-shot group, max 10s per shot
+- Tone keywords in dialogue tags improve output quality
+
+### Kling 3.0 Multi-Shot Grouping
 
 For Kling 3.0 multi-shot mode (max 6 shots per group), group shots by:
 
@@ -181,6 +196,13 @@ Multi-shot Prompt 1: Medium shot, Elena sets down a plate too hard...
 Multi-shot Prompt 2: Close-up reaction, Marco turns around...
 [Marco, defensive]: "Because you never stop blaming!" (Duration: 4s)
 ```
+
+### Veo 3.1 (Google)
+
+- Supports first-frame and first+last-frame input
+- Excellent at interpreting cinematic vocabulary
+- Native audio generation — dialogue prompts can include voice tone descriptions
+- Up to 2K resolution output
 
 ## Dual Format Requirement
 

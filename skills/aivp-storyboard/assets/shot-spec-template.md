@@ -73,7 +73,31 @@
 
 ## For aivp-video
 
-### Kling 3.0
+### Seedance 2.0 (Primary)
+
+```
+【整体描述】
+{风格}，{时长}秒，{画面比例}，{整体氛围/色调}
+
+【分镜描述】
+0-{X}秒：{景别}{运镜}，{画面内容}，{主体动作}，{光影效果}
+{X}-{Y}秒：...
+
+【声音说明】
+{配乐风格} + {音效} + {对白/旁白}
+
+【参考素材说明】
+@图片1 作为角色形象参考
+
+角色面部稳定不变形，动作自然流畅，4K超高清，电影质感，画面稳定
+```
+
+**Input frames**: {first-frame only / first + last frame}
+**Duration**: {N}s
+**Aspect ratio**: {ratio}
+**Camera mode**: {fixed / unfixed}
+
+### Kling 3.0 (Fallback)
 
 ```
 [Camera: {movement}, {shot_type}, {angle}]
@@ -82,16 +106,3 @@
 [{Character}, {tone}]: "{dialogue}" 
 (Duration: {N}s)
 ```
-
-### Seedance 2.0
-
-```
-{Subject motion with degree adverbs}
-Camera: {movement keyword}
-{Scene/atmosphere}
-```
-
-**Input frames**: {first-frame only / first + last frame}
-**Duration**: {N}s
-**Aspect ratio**: {ratio}
-**Camera mode**: {fixed / unfixed}

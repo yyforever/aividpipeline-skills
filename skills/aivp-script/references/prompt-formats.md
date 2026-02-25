@@ -12,7 +12,82 @@ Front-load the most important elements — AI models weight the first 20-30 word
 
 ---
 
-## Kling 3.0 (Kuaishou)
+## Seedance 2.0 (ByteDance) — Primary
+
+### Basic Structure
+
+```
+Prompt = [Subject] + [Motion] + [Scene] + [Lens] + [Style]
+```
+
+### Time-Axis Storyboard Format (Recommended)
+
+```
+【整体描述】
+{风格} + {时长}秒 + {画面比例} + {整体氛围/色调}
+
+【分镜描述】
+0-3秒：{景别}{运镜}，{画面内容}，{主体动作}，{光影效果}
+3-7秒：{景别}{运镜}，{画面内容}，{主体动作}，{光影效果}
+7-11秒：...
+
+【声音说明】
+{配乐风格} + {音效} + {对白/旁白}
+
+【参考素材说明】（如有）
+@图片1 作为角色形象参考
+@图片2 作为场景风格参考
+```
+
+### Image-to-Video
+
+Focus ONLY on motion/change (don't describe what's already in the reference image):
+
+```
+The woman slowly turns her head toward camera,
+eyes narrowing with suspicion.
+Camera: slow zoom in. Dramatic side lighting.
+```
+
+### Multi-Shot (via "lens switch")
+
+```
+Close-up of hands gripping a letter, trembling slightly.
+Lens switch.
+Medium shot, the woman looks up from the letter,
+face shifting from confusion to fury.
+Lens switch.
+Wide shot of the room, she stands abruptly,
+chair scraping back, letter falling to the floor.
+```
+
+### Omni Reference Mode
+
+When using reference files (up to 12: 9 images + 3 videos + 3 audio):
+
+```
+@Image1 is the main character.
+@Image2 is the office environment.
+The character walks into the office, looks around nervously,
+then sits down at the desk.
+Camera: follows from behind, then orbits to face.
+```
+
+### Seedance 2.0 Key Rules
+
+- **Degree adverbs are critical** — "quickly" not "moves", "violently" not "pushes"
+- **"Lens switch"** triggers multi-shot within one generation
+- **Negative prompts don't work** — describe what you want, not what you don't
+- **Camera keywords:** surround, aerial, zoom, pan, follow, handheld
+- **For unfixed camera prompts, select "unfixed camera" in parameters**
+- **Gentle motion words** for smooth results: slow, gentle, continuous, natural, smooth
+- **Max duration:** 15s per generation
+- **Quality suffix:** append "4K, 超高清, 细节丰富, 电影质感, 画面稳定"
+- **Character constraint:** append "角色面部稳定不变形，动作自然流畅" when people present
+
+---
+
+## Kling 3.0 (Kuaishou) — Fallback
 
 ### Single Shot
 
@@ -50,61 +125,8 @@ Silence. Sad piano chord enters quietly. (Duration: 6s)
 - **Cinematic vocabulary** — profile shot, macro close-up, tracking shot, POV, shot-reverse-shot
 - **Dialogue format:** `[Character Name, tone description]: "dialogue text"` — name must match character sheet exactly
 - **Tone keywords in dialogue tags** improve output: controlled, trembling, whispering, shouting
-- **Max 6 shots** per generation, **max 15s** per shot
+- **Max 6 shots** per generation, **max 10s** per shot
 - **Duration tag** at end of each shot
-
----
-
-## Seedance 2.0 (ByteDance)
-
-### Basic Structure
-
-```
-Prompt = [Subject] + [Motion] + [Scene] + [Lens] + [Style]
-```
-
-### Image-to-Video
-
-Focus ONLY on motion/change (don't describe what's already in the reference image):
-
-```
-The woman slowly turns her head toward camera,
-eyes narrowing with suspicion.
-Camera: slow zoom in. Dramatic side lighting.
-```
-
-### Multi-Shot (via "lens switch")
-
-```
-Close-up of hands gripping a letter, trembling slightly.
-Lens switch.
-Medium shot, the woman looks up from the letter,
-face shifting from confusion to fury.
-Lens switch.
-Wide shot of the room, she stands abruptly,
-chair scraping back, letter falling to the floor.
-```
-
-### All-Round Reference Mode
-
-When using reference files (up to 12: images/videos/audio):
-
-```
-@Image1 is the main character.
-@Image2 is the office environment.
-The character walks into the office, looks around nervously,
-then sits down at the desk.
-Camera: follows from behind, then orbits to face.
-```
-
-### Seedance 2.0 Key Rules
-
-- **Degree adverbs are critical** — "quickly" not "moves", "violently" not "pushes"
-- **"Lens switch"** triggers multi-shot within one generation
-- **Negative prompts don't work** — describe what you want, not what you don't
-- **Camera keywords:** surround, aerial, zoom, pan, follow, handheld
-- **For unfixed camera prompts, select "unfixed camera" in parameters**
-- **Gentle motion words** for smooth results: slow, gentle, continuous, natural, smooth
 
 ---
 
@@ -201,7 +223,27 @@ Technical prompts have two complementary formats per scene in `prompts-v{N}.md`:
 - SFX: paper rustling, sharp exhale
 ```
 
-### 2. Multi-Shot Prompts (for aivp-video — Kling 3.0)
+### 2. Seedance 2.0 Time-Axis Prompt (Primary — for aivp-video)
+
+```markdown
+【整体描述】
+{风格}，{时长}秒，{画面比例}，{整体氛围/色调}
+
+【分镜描述】
+0-Xs：{景别}{运镜}，{画面内容}，{主体动作}，{光影效果}
+X-Ys：...
+
+【声音说明】
+{配乐风格} + {音效} + {对白/旁白}
+
+【参考素材说明】
+@图片1 作为角色形象参考
+@图片2 作为场景风格参考
+
+角色面部稳定不变形，动作自然流畅，4K超高清，电影质感，画面稳定
+```
+
+### 3. Kling 3.0 Multi-Shot Prompt (Fallback — for aivp-video)
 
 ```markdown
 Master Prompt: {scene context — location, lighting, mood}
@@ -213,9 +255,9 @@ Multi-shot Prompt 2: ...
 ```
 
 **Rules for multi-shot groups:**
-- Max 6 shots per group (Kling limit)
+- Max 6 shots per group (Kling limit), max 10s per shot
 - Dialogue-heavy → group by conversation beat
 - Action-heavy → group by continuous motion sequence
 - Master Prompt = shared context (location, lighting, mood)
 
-Both formats cover the same scenes — decomposition is the detailed spec, multi-shot is the production-ready input. They must stay in sync.
+All three formats cover the same scenes — decomposition is the detailed spec, Seedance/Kling prompts are model-specific production inputs. They must stay in sync.

@@ -2,7 +2,7 @@
 
 Define every character BEFORE writing scenes. These sheets are reused by:
 - `aivp-image` — generate consistent reference images (multi-angle portraits)
-- `aivp-video` — character anchoring in Kling 3.0 / Seedance 2.0
+- `aivp-video` — character anchoring in Seedance 2.0 / Kling 3.0
 - `aivp-audio` — voice profile for TTS
 
 ## Template
