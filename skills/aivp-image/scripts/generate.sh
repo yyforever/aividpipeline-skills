@@ -1,211 +1,246 @@
 #!/bin/bash
+set -euo pipefail
 
-# AIVP Image Generation Script with Queue Support
-# Usage: ./generate.sh --prompt "..." [--model MODEL] [options]
-# Returns: JSON with generated image URLs
-#
-# Shares the same fal.ai queue infrastructure as aivp-video.
+# AIVP Image Generation via OpenRouter API
+# Usage: ./generate.sh --prompt "..." --model "..." [options]
+# Returns: Saved image path + JSON metadata to stdout
 
-set -e
+OPENROUTER_API_URL="https://openrouter.ai/api/v1/chat/completions"
 
-FAL_QUEUE_ENDPOINT="https://queue.fal.run"
-FAL_SYNC_ENDPOINT="https://fal.run"
-FAL_TOKEN_ENDPOINT="https://rest.alpha.fal.ai/storage/auth/token?storage_type=fal-cdn-v3"
-
-# Default values
-MODEL="fal-ai/nano-banana-pro"
+# Defaults
 PROMPT=""
-IMAGE_URL=""
-IMAGE_FILE=""
-IMAGE_SIZE="landscape_4_3"
-NUM_IMAGES=1
+MODEL=""
+REFERENCE=""
+OUTPUT="./output.png"
+MODALITIES=""
+SIZE=""
+WIDTH=""
+HEIGHT=""
 SEED=""
-MODE="queue"
-REQUEST_ID=""
-ACTION="generate"
-POLL_INTERVAL=2
-MAX_POLL_TIME=120
-OUTPUT_PATH=""
 
-# Check for --add-fal-key first
-for arg in "$@"; do
-    if [ "$arg" = "--add-fal-key" ]; then
-        shift
-        KEY_VALUE=""
-        if [[ -n "$1" && ! "$1" =~ ^-- ]]; then KEY_VALUE="$1"; fi
-        if [ -z "$KEY_VALUE" ]; then echo "Enter your fal.ai API key:" >&2; read -r KEY_VALUE; fi
-        if [ -n "$KEY_VALUE" ]; then
-            grep -v "^FAL_KEY=" .env > .env.tmp 2>/dev/null || true
-            mv .env.tmp .env 2>/dev/null || true
-            echo "FAL_KEY=$KEY_VALUE" >> .env
-            echo "FAL_KEY saved to .env" >&2
-        fi
-        exit 0
+# ── Help ──────────────────────────────────────────────
+show_help() {
+    cat >&2 << 'EOF'
+AIVP Image Generation (OpenRouter)
+
+Usage: ./generate.sh --prompt "..." --model "..." [options]
+
+Required:
+  --prompt, -p      Image description
+  --model, -m       OpenRouter model ID (e.g. black-forest-labs/flux.2-pro)
+
+Optional:
+  --reference, -r   Reference image path (for I2I / multi-modal)
+  --output, -o      Output image path (default: ./output.png)
+  --modalities      "image" or "image,text" (auto-detected if omitted)
+  --size            square / portrait / landscape
+  --width           Explicit width in pixels
+  --height          Explicit height in pixels
+  --seed            Reproducibility seed
+
+Environment:
+  OPENROUTER_API_KEY  API key (or set in .env / ~/.env / ~/.aivp/.env)
+
+Examples:
+  # Text-to-image with Flux
+  ./generate.sh -p "A sunlit kitchen, cinematic" -m "black-forest-labs/flux.2-pro" -o kitchen.png
+
+  # Multi-modal with Gemini (includes text response)
+  ./generate.sh -p "Portrait of a young woman" -m "google/gemini-2.5-flash-image" -o portrait.png
+
+  # With reference image
+  ./generate.sh -p "Same woman, different angle" -m "google/gemini-2.5-flash-image" -r portrait.png -o portrait2.png
+EOF
+    exit 0
+}
+
+# ── Load .env ─────────────────────────────────────────
+for envfile in ".env" "$HOME/.env" "$HOME/.aivp/.env"; do
+    if [ -f "$envfile" ]; then
+        # shellcheck disable=SC1090
+        source "$envfile" 2>/dev/null || true
     fi
 done
 
-# Load .env
-for envfile in ".env" "$HOME/.env" "$HOME/.aivp/.env"; do
-    [ -f "$envfile" ] && source "$envfile" 2>/dev/null || true
-done
-
-# Parse arguments
+# ── Parse arguments ───────────────────────────────────
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --prompt|-p) PROMPT="$2"; shift 2 ;;
-        --model|-m) MODEL="$2"; shift 2 ;;
-        --image-url) IMAGE_URL="$2"; shift 2 ;;
-        --file|--image) IMAGE_FILE="$2"; shift 2 ;;
-        --size)
-            case $2 in
-                square) IMAGE_SIZE="square" ;;
-                portrait) IMAGE_SIZE="portrait_4_3" ;;
-                landscape) IMAGE_SIZE="landscape_4_3" ;;
-                *) IMAGE_SIZE="$2" ;;
-            esac
-            shift 2
-            ;;
-        --num-images) NUM_IMAGES="$2"; shift 2 ;;
-        --seed) SEED="$2"; shift 2 ;;
-        --output|-o) OUTPUT_PATH="$2"; shift 2 ;;
-        --async) MODE="async"; shift ;;
-        --sync) MODE="sync"; shift ;;
-        --status) ACTION="status"; REQUEST_ID="$2"; shift 2 ;;
-        --result) ACTION="result"; REQUEST_ID="$2"; shift 2 ;;
-        --cancel) ACTION="cancel"; REQUEST_ID="$2"; shift 2 ;;
-        --poll-interval) POLL_INTERVAL="$2"; shift 2 ;;
-        --timeout) MAX_POLL_TIME="$2"; shift 2 ;;
-        --schema)
-            SCHEMA_MODEL="${2:-$MODEL}"
-            ENCODED=$(echo "$SCHEMA_MODEL" | sed 's/\//%2F/g')
-            curl -s "https://fal.ai/api/openapi/queue/openapi.json?endpoint_id=$ENCODED"
-            exit 0
-            ;;
-        --help|-h)
-            echo "AIVP Image Generation Script" >&2
-            echo "Usage: ./generate.sh --prompt \"...\" [options]" >&2
-            echo "" >&2
-            echo "  --prompt, -p      Text description (required)" >&2
-            echo "  --model, -m       Model (default: fal-ai/nano-banana-pro)" >&2
-            echo "  --image-url       Input image for I2I" >&2
-            echo "  --file            Local file (auto-uploads)" >&2
-            echo "  --size            square, portrait, landscape" >&2
-            echo "  --num-images      Number of images (default: 1)" >&2
-            echo "  --seed            Random seed" >&2
-            echo "  --output, -o      Save to local path" >&2
-            echo "  --async           Return immediately" >&2
-            echo "  --status ID       Check status" >&2
-            echo "  --result ID       Get result" >&2
-            exit 0
-            ;;
-        *) shift ;;
+        --prompt|-p)    PROMPT="$2"; shift 2 ;;
+        --model|-m)     MODEL="$2"; shift 2 ;;
+        --reference|-r) REFERENCE="$2"; shift 2 ;;
+        --output|-o)    OUTPUT="$2"; shift 2 ;;
+        --modalities)   MODALITIES="$2"; shift 2 ;;
+        --size)         SIZE="$2"; shift 2 ;;
+        --width)        WIDTH="$2"; shift 2 ;;
+        --height)       HEIGHT="$2"; shift 2 ;;
+        --seed)         SEED="$2"; shift 2 ;;
+        --help|-h)      show_help ;;
+        *)              echo "Unknown option: $1" >&2; exit 1 ;;
     esac
 done
 
-# Validate
-if [ -z "$FAL_KEY" ]; then
-    echo "Error: FAL_KEY not set. Run: ./generate.sh --add-fal-key" >&2
+# ── Validate ──────────────────────────────────────────
+if [ -z "$OPENROUTER_API_KEY" ]; then
+    echo "Error: OPENROUTER_API_KEY not set." >&2
+    echo "Set it via environment variable or .env file." >&2
     exit 1
 fi
-
-# Handle local file upload
-if [ -n "$IMAGE_FILE" ]; then
-    if [ ! -f "$IMAGE_FILE" ]; then
-        echo "Error: File not found: $IMAGE_FILE" >&2
-        exit 1
-    fi
-    FILENAME=$(basename "$IMAGE_FILE")
-    EXT_LOWER=$(echo "${FILENAME##*.}" | tr '[:upper:]' '[:lower:]')
-    case "$EXT_LOWER" in
-        jpg|jpeg) CT="image/jpeg" ;; png) CT="image/png" ;; webp) CT="image/webp" ;; *) CT="application/octet-stream" ;;
-    esac
-    echo "Uploading $FILENAME..." >&2
-    TR=$(curl -s -X POST "$FAL_TOKEN_ENDPOINT" -H "Authorization: Key $FAL_KEY" -H "Content-Type: application/json" -d '{}')
-    CDN_TOKEN=$(echo "$TR" | grep -o '"token":"[^"]*"' | cut -d'"' -f4)
-    CDN_TT=$(echo "$TR" | grep -o '"token_type":"[^"]*"' | cut -d'"' -f4)
-    CDN_URL=$(echo "$TR" | grep -o '"base_url":"[^"]*"' | cut -d'"' -f4)
-    UR=$(curl -s -X POST "${CDN_URL}/files/upload" -H "Authorization: $CDN_TT $CDN_TOKEN" -H "Content-Type: $CT" -H "X-Fal-File-Name: $FILENAME" --data-binary "@$IMAGE_FILE")
-    IMAGE_URL=$(echo "$UR" | grep -o '"access_url":"[^"]*"' | cut -d'"' -f4)
-    echo "Uploaded: $IMAGE_URL" >&2
-fi
-
-HEADERS=(-H "Authorization: Key $FAL_KEY" -H "Content-Type: application/json")
-
-# Queue operations
-case $ACTION in
-    status)
-        curl -s -X GET "$FAL_QUEUE_ENDPOINT/$MODEL/requests/$REQUEST_ID/status" "${HEADERS[@]}"
-        exit 0 ;;
-    result)
-        curl -s -X GET "$FAL_QUEUE_ENDPOINT/$MODEL/requests/$REQUEST_ID" "${HEADERS[@]}"
-        exit 0 ;;
-    cancel)
-        curl -s -X PUT "$FAL_QUEUE_ENDPOINT/$MODEL/requests/$REQUEST_ID/cancel" "${HEADERS[@]}"
-        exit 0 ;;
-esac
 
 if [ -z "$PROMPT" ]; then
     echo "Error: --prompt is required" >&2
     exit 1
 fi
 
-# Build payload
-PAYLOAD="{\"prompt\": \"$PROMPT\", \"image_size\": \"$IMAGE_SIZE\", \"num_images\": $NUM_IMAGES"
-[ -n "$IMAGE_URL" ] && PAYLOAD="$PAYLOAD, \"image_url\": \"$IMAGE_URL\""
-[ -n "$SEED" ] && PAYLOAD="$PAYLOAD, \"seed\": $SEED"
-PAYLOAD="$PAYLOAD}"
-
-# Sync mode
-if [ "$MODE" = "sync" ]; then
-    RESPONSE=$(curl -s -X POST "$FAL_SYNC_ENDPOINT/$MODEL" "${HEADERS[@]}" -d "$PAYLOAD")
-    URL=$(echo "$RESPONSE" | grep -o '"url":"[^"]*"' | head -1 | cut -d'"' -f4)
-    [ -n "$URL" ] && echo "Image URL: $URL" >&2
-    echo "$RESPONSE"
-    exit 0
+if [ -z "$MODEL" ]; then
+    echo "Error: --model is required" >&2
+    exit 1
 fi
 
-# Queue submit
-echo "Submitting to queue: $MODEL..." >&2
-SUBMIT=$(curl -s -X POST "$FAL_QUEUE_ENDPOINT/$MODEL" "${HEADERS[@]}" -d "$PAYLOAD")
-
-REQUEST_ID=$(echo "$SUBMIT" | grep -oE '"request_id"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*: *"//' | sed 's/"$//')
-STATUS_URL=$(echo "$SUBMIT" | grep -oE '"status_url"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*: *"//' | sed 's/"$//')
-RESPONSE_URL=$(echo "$SUBMIT" | grep -oE '"response_url"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*: *"//' | sed 's/"$//')
-
-if [ -z "$REQUEST_ID" ]; then
-    echo "Error: No request_id" >&2; echo "$SUBMIT" >&2; exit 1
-fi
-echo "Request ID: $REQUEST_ID" >&2
-
-if [ "$MODE" = "async" ]; then
-    echo "Submitted. Check: ./generate.sh --status \"$REQUEST_ID\" --model \"$MODEL\"" >&2
-    echo "$SUBMIT"
-    exit 0
+# ── Auto-detect modalities ───────────────────────────
+if [ -z "$MODALITIES" ]; then
+    case "$MODEL" in
+        black-forest-labs/*|flux*|ideogram/*|recraft/*)
+            MODALITIES="image"
+            ;;
+        *)
+            MODALITIES="image,text"
+            ;;
+    esac
 fi
 
-# Poll
-ELAPSED=0
-while [ $ELAPSED -lt $MAX_POLL_TIME ]; do
-    sleep $POLL_INTERVAL
-    ELAPSED=$((ELAPSED + POLL_INTERVAL))
-    SR=$(curl -s -X GET "$STATUS_URL" "${HEADERS[@]}")
-    STATUS=$(echo "$SR" | grep -oE '"status"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*: *"//' | sed 's/"$//')
-    echo "Status: $STATUS ($ELAPSED/${MAX_POLL_TIME}s)" >&2
-    [ "$STATUS" = "COMPLETED" ] && break
-    [ "$STATUS" = "FAILED" ] && { echo "Error: Failed" >&2; echo "$SR"; exit 1; }
-done
-
-if [ "$STATUS" != "COMPLETED" ]; then
-    echo "Error: Timeout" >&2; exit 1
+# ── Build size instruction ────────────────────────────
+SIZE_INSTRUCTION=""
+if [ -n "$WIDTH" ] && [ -n "$HEIGHT" ]; then
+    SIZE_INSTRUCTION="Generate at ${WIDTH}x${HEIGHT} resolution."
+elif [ -n "$SIZE" ]; then
+    case "$SIZE" in
+        square)    SIZE_INSTRUCTION="Generate a square image (1:1 aspect ratio)." ;;
+        portrait)  SIZE_INSTRUCTION="Generate a portrait image (3:4 or 9:16 aspect ratio)." ;;
+        landscape) SIZE_INSTRUCTION="Generate a landscape image (16:9 or 4:3 aspect ratio)." ;;
+    esac
 fi
 
-RESULT=$(curl -s -X GET "$RESPONSE_URL" "${HEADERS[@]}")
-URL=$(echo "$RESULT" | grep -o '"url":"[^"]*"' | head -1 | cut -d'"' -f4)
-echo "Image URL: $URL" >&2
-
-if [ -n "$OUTPUT_PATH" ] && [ -n "$URL" ]; then
-    curl -sL "$URL" -o "$OUTPUT_PATH"
-    echo "Saved: $OUTPUT_PATH" >&2
+# ── Build prompt with optional size ───────────────────
+FULL_PROMPT="$PROMPT"
+if [ -n "$SIZE_INSTRUCTION" ]; then
+    FULL_PROMPT="$FULL_PROMPT. $SIZE_INSTRUCTION"
+fi
+if [ -n "$SEED" ]; then
+    FULL_PROMPT="$FULL_PROMPT [seed: $SEED]"
 fi
 
-echo "$RESULT"
+# ── Build messages array ──────────────────────────────
+# Escape prompt for JSON
+ESCAPED_PROMPT=$(printf '%s' "$FULL_PROMPT" | python3 -c "import sys,json; print(json.dumps(sys.stdin.read()))")
+
+if [ -n "$REFERENCE" ]; then
+    # Multi-modal message with reference image
+    if [ ! -f "$REFERENCE" ]; then
+        echo "Error: Reference file not found: $REFERENCE" >&2
+        exit 1
+    fi
+
+    # Detect MIME type
+    EXT=$(echo "${REFERENCE##*.}" | tr '[:upper:]' '[:lower:]')
+    case "$EXT" in
+        jpg|jpeg) MIME="image/jpeg" ;;
+        png)      MIME="image/png" ;;
+        webp)     MIME="image/webp" ;;
+        gif)      MIME="image/gif" ;;
+        *)        MIME="image/png" ;;
+    esac
+
+    # Base64 encode reference
+    REF_B64=$(base64 -w0 "$REFERENCE" 2>/dev/null || base64 "$REFERENCE" 2>/dev/null)
+
+    MESSAGES="[{\"role\":\"user\",\"content\":[{\"type\":\"image_url\",\"image_url\":{\"url\":\"data:${MIME};base64,${REF_B64}\"}},{\"type\":\"text\",\"text\":${ESCAPED_PROMPT}}]}]"
+else
+    MESSAGES="[{\"role\":\"user\",\"content\":${ESCAPED_PROMPT}}]"
+fi
+
+# ── Build modalities JSON array ───────────────────────
+MODALITIES_JSON=$(echo "$MODALITIES" | tr ',' '\n' | sed 's/^/"/;s/$/"/' | paste -sd',' | sed 's/^/[/;s/$/]/')
+
+# ── Build request payload ─────────────────────────────
+PAYLOAD="{\"model\":\"$MODEL\",\"messages\":$MESSAGES,\"modalities\":$MODALITIES_JSON,\"max_tokens\":1024}"
+
+# ── Call OpenRouter API ───────────────────────────────
+echo "Generating image with $MODEL..." >&2
+
+PAYLOAD_FILE=$(mktemp /tmp/aivp-payload-XXXXXX.json)
+RESP_FILE=$(mktemp /tmp/aivp-resp-XXXXXX.json)
+trap "rm -f '$PAYLOAD_FILE' '$RESP_FILE'" EXIT
+
+echo "$PAYLOAD" > "$PAYLOAD_FILE"
+
+curl -s -X POST "$OPENROUTER_API_URL" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $OPENROUTER_API_KEY" \
+    -H "HTTP-Referer: https://github.com/yyforever/aividpipeline-skills" \
+    -H "X-Title: AIVP Image Generation" \
+    -d "@$PAYLOAD_FILE" \
+    --max-time 120 \
+    -o "$RESP_FILE"
+
+# ── Parse response ────────────────────────────────────
+python3 - "$RESP_FILE" "$OUTPUT" "$MODEL" "$PROMPT" << 'PYEOF'
+import json, base64, sys, os
+
+resp_file, output_path, model, prompt = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+
+with open(resp_file, "r") as f:
+    resp = json.load(f)
+
+# Check for errors
+if "error" in resp:
+    msg = resp["error"].get("message", str(resp["error"]))
+    print(f"Error: {msg}", file=sys.stderr)
+    sys.exit(1)
+
+# Extract image
+choice = resp["choices"][0]
+msg = choice["message"]
+images = msg.get("images", [])
+
+if not images:
+    print("Warning: No images in response", file=sys.stderr)
+    content = msg.get("content", "")
+    if content:
+        print(f"Content: {content[:200]}", file=sys.stderr)
+    sys.exit(1)
+
+# Decode and save first image
+img_url = images[0].get("image_url", {}).get("url", "")
+
+if not img_url.startswith("data:image"):
+    print("Error: Unexpected image format", file=sys.stderr)
+    sys.exit(1)
+
+header, b64_data = img_url.split(",", 1)
+fmt = header.split("/")[1].split(";")[0]
+raw = base64.b64decode(b64_data)
+
+# If output has no extension, add detected format
+if not os.path.splitext(output_path)[1]:
+    output_path += f".{fmt}"
+
+os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
+
+with open(output_path, "wb") as f:
+    f.write(raw)
+
+print(f"Saved: {output_path} ({len(raw)//1024}KB, {fmt})", file=sys.stderr)
+
+# Output JSON metadata to stdout
+usage = resp.get("usage", {})
+meta = {
+    "output": output_path,
+    "format": fmt,
+    "size_bytes": len(raw),
+    "model": model,
+    "provider": resp.get("provider", "unknown"),
+    "cost": usage.get("cost", 0),
+    "prompt": prompt[:500],
+}
+print(json.dumps(meta, indent=2))
+PYEOF
