@@ -222,9 +222,9 @@ project/
 ├── ideation/          ← aivp-ideation owns
 ├── script/            ← aivp-script owns
 ├── storyboard/        ← aivp-storyboard owns (this skill)
-├── image/             ← aivp-image (future)
-├── video/             ← aivp-video (future)
-└── audio/             ← aivp-audio (future)
+├── image/             ← aivp-image owns
+├── video/             ← aivp-video (next)
+└── audio/             ← aivp-audio (next)
 ```
 
 Each skill reads from upstream sibling directories and writes only to its own.

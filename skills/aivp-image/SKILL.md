@@ -3,7 +3,7 @@ name: aivp-image
 description: Generate keyframe images for video production — character portraits, scene keyframes, and style frames via OpenRouter API. Activate on "generate keyframe", "create image", "character portrait", "scene image", "generate frames", or any image generation request in the video pipeline.
 metadata:
   author: aividpipeline
-  version: "0.2.0"
+  version: "0.3.0"
   tags: image, keyframe, openrouter, text-to-image, image-to-image, character-consistency
 ---
 
@@ -41,36 +41,66 @@ Read storyboard outputs (frame-plan.md + shots/*.md)
 2. **Read storyboard outputs** (pipeline mode):
    - `storyboard/storyboard-final/frame-plan.md` — generation order + reference image list
    - `storyboard/storyboard-final/shots/shot-{NN}.md` — per-shot specs (prompt, resolution, references)
-   - `script/characters/*.md` — character portrait descriptions
+   - `script/characters/*.md` — character portrait descriptions (text)
    - `script/scenes/*.md` — scene background descriptions
 3. **Create `image/plan.md`** — track generation progress
 
-### Step 1: Plan Generation Queue
+### Step 1: Generate Character Portraits (Priority 0)
+
+**Before any scene keyframes**, generate character reference images. These are the visual anchors for the entire video — all subsequent frames reference them for consistency.
+
+For each character in `script/characters/*.md`:
+
+1. **Three-view sheet** — front / side (3/4) / back in one image:
+   ```bash
+   bash scripts/generate.sh \
+     --prompt "Character turnaround sheet, three views (front, 3/4 side, back) of [character description from character sheet]. White background, full body, consistent lighting, reference sheet style" \
+     --model "black-forest-labs/flux.2-pro" \
+     --output image/characters/{name}-turnaround.png
+   ```
+
+2. **Individual portraits** (for frame-plan references):
+   - Front portrait → `image/characters/{name}-front.png`
+   - Side (3/4) portrait → `image/characters/{name}-side.png`
+   - Back portrait → `image/characters/{name}-back.png`
+
+Use the turnaround sheet as reference for individual portraits to ensure consistency:
+```bash
+bash scripts/generate.sh \
+  --prompt "Front portrait of [character description], head and shoulders, studio lighting" \
+  --model "google/gemini-2.5-flash-image" \
+  --reference image/characters/{name}-turnaround.png \
+  --output image/characters/{name}-front.png
+```
+
+Save metadata to `image/log/character-{name}.json`.
+
+### Step 2: Plan Scene Generation Queue
 
 From `frame-plan.md`, build the ordered queue:
 
-1. **Priority 1: Root cameras** — establishing shots (Text-to-Image, no prior frames)
-2. **Priority 2: Child cameras** — medium shots derived from parent frames (Image-to-Image)
+1. **Priority 1: Root cameras** — establishing shots (T2I, use character portraits + scene descriptions as reference)
+2. **Priority 2: Child cameras** — medium/close shots derived from parent frames (I2I)
 3. **Priority 3: Last frames** — for medium/large variation shots only
 
 For each frame, note:
-- Generation mode: T2I (text-to-image) or I2I (image-to-image with reference)
+- Generation mode: T2I or I2I
 - Model choice (user specifies or use default)
-- Reference images to include
+- Character portraits to reference (from Step 1)
 - Target resolution
 
-### Step 2: Generate Frames
+### Step 3: Generate Scene Keyframes
 
 For each frame in the queue, call `scripts/generate.sh`:
 
 ```bash
-# Text-to-image (root camera, no prior frames)
+# Root camera establishing shot (T2I, reference character portraits)
 bash scripts/generate.sh \
   --prompt "Wide shot of a sunlit kitchen..." \
   --model "black-forest-labs/flux.2-pro" \
   --output image/frames/shot-01-ff.png
 
-# With reference image (child camera, refine from parent)
+# Child camera (I2I, refine from parent frame)
 bash scripts/generate.sh \
   --prompt "Medium shot, same kitchen, focus on woman at counter..." \
   --model "google/gemini-2.5-flash-image" \
@@ -83,17 +113,19 @@ After each generation:
 - Log metadata to `image/log/shot-{NN}-ff.json` (model, cost, prompt, seed)
 - Update `image/plan.md` with status
 
-### Step 3: Quality Review
+### Step 4: Quality Review
 
 After all frames are generated:
-1. Check visual consistency across shots in same scene
-2. Check character consistency (same person should look the same)
-3. Check scene consistency (same location should look the same)
+1. Check character consistency — compare each frame's characters against turnaround sheet
+2. Check scene consistency — same location should look the same across shots
+3. Check visual continuity — parent/child camera shots should be spatially coherent
 4. Flag any frames that need regeneration
 
-### Step 4: Update Preview
+### Step 5: Update Preview
 
-Replace `[🖼️ 待生成]` placeholders in `storyboard/storyboard-final/preview.md` with actual image paths or inline references.
+Replace `[🖼️ 待生成]` placeholders in `storyboard/storyboard-final/preview.md` with actual image paths.
+
+> **Note:** This is a cross-directory write (image writing to storyboard's preview.md). This is an intentional exception to the "write only to own directory" rule — storyboard's Integration section acknowledges this update.
 
 ## Script Reference
 
@@ -148,13 +180,20 @@ echo "OPENROUTER_API_KEY=sk-or-v1-..." >> .env
 ```
 project/image/
 ├── plan.md                    ← Track generation progress
-├── frames/                    ← Generated keyframe images
+├── characters/                ← Character reference images (generated first)
+│   ├── elena-turnaround.png   ← Three-view sheet (front + side + back)
+│   ├── elena-front.png        ← Individual front portrait
+│   ├── elena-side.png         ← Individual 3/4 side portrait
+│   ├── elena-back.png         ← Individual back portrait
+│   └── marco-turnaround.png
+├── frames/                    ← Scene keyframe images
 │   ├── shot-01-ff.png         ← Shot 1 first-frame
 │   ├── shot-01-lf.png         ← Shot 1 last-frame (if medium/large)
 │   ├── shot-02-ff.png
 │   └── ...
 └── log/                       ← Generation metadata
-    ├── shot-01-ff.json        ← Model, cost, prompt, timestamp
+    ├── character-elena.json   ← Character portrait generation log
+    ├── shot-01-ff.json        ← Per-frame: model, cost, prompt, timestamp
     └── ...
 ```
 
@@ -166,15 +205,29 @@ project/image/
 ## Integration
 
 - **Input from:** `aivp-storyboard` →
-  - `storyboard/storyboard-final/frame-plan.md` — generation order + references
+  - `storyboard/storyboard-final/frame-plan.md` — generation order + reference image list
   - `storyboard/storyboard-final/shots/*.md` — per-shot image prompts + resolution
-  - `storyboard/storyboard-final/preview.md` — to update with generated image paths
+  - `storyboard/storyboard-final/preview.md` — to update with generated image paths (cross-directory write)
 - **Input from:** `aivp-script` →
-  - `script/characters/*.md` — character visual descriptions (for portrait consistency)
+  - `script/characters/*.md` — character visual descriptions (for generating turnaround sheets + portraits)
   - `script/scenes/*.md` — scene background descriptions
 - **Output to:**
-  - `aivp-video` → `image/frames/*.png` (keyframes as input for video generation)
-  - `aivp-storyboard` → updates `preview.md` image placeholders
+  - `aivp-video` → `image/characters/*.png` (character portraits for reference) + `image/frames/*.png` (keyframes as video input)
+  - `aivp-storyboard` → updates `preview.md` image placeholders (cross-directory exception)
+
+### Project Directory Convention
+
+```
+project/
+├── ideation/          ← aivp-ideation owns
+├── script/            ← aivp-script owns
+├── storyboard/        ← aivp-storyboard owns
+├── image/             ← aivp-image owns (this skill)
+├── video/             ← aivp-video (next)
+└── audio/             ← aivp-audio (next)
+```
+
+Each skill reads from upstream sibling directories and writes only to its own — except image updates storyboard's `preview.md` (acknowledged by both skills).
 
 ### Standalone Mode
 

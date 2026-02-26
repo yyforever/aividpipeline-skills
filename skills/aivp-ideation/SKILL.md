@@ -132,9 +132,9 @@ project/
 │   ├── script-final.md
 │   └── prompts-final.md
 ├── storyboard/       ← aivp-storyboard owns this
-├── image/            ← aivp-image (future)
-├── video/            ← aivp-video (future)
-└── audio/            ← aivp-audio (future)
+├── image/            ← aivp-image owns
+├── video/            ← aivp-video (next)
+└── audio/            ← aivp-audio (next)
 ```
 
 > **Full pipeline**: `ideation → script → storyboard → {image, video, audio} → edit → publish`
