@@ -3,7 +3,7 @@ name: aivp-storyboard
 description: Convert scripts into production-ready storyboards with camera tree, frame generation plan, and visual continuity. Activate on "create storyboard", "shot breakdown", "visual plan", "scene breakdown", "storyboard from script", or any visual planning request after script is written.
 metadata:
   author: aividpipeline
-  version: "0.6.0"
+  version: "0.7.0"
   tags: storyboard, camera-tree, shot-decomposition, frame-plan, visual-continuity
 ---
 
@@ -127,13 +127,33 @@ Read `references/quality-checks.md` and verify. Save results to `storyboard/note
 
 ### Step 6: Present & Iterate
 
-Show user: visual summary (shot count, camera positions, duration) + key shots + quality results.
-Collect feedback → revise → next round.
+**Generate a user-friendly visual storyboard** using `assets/preview-template.md` format. This is what the user sees — it must be intuitive for non-technical users.
+
+Key rules for the preview:
+- **NO technical jargon**: no cam_idx, variation type, 3-tuple, ff_desc/lf_desc
+- **Use plain language shot types**: 全景/中景/特写 (or Wide/Medium/Close-up)
+- **Each shot shows 4 things**: ① 画面描述 ② 运镜 ③ 声音 ④ 时长
+- **Emoji markers**: 📷 camera movement, 🎵 music, 🔊 sound effects, 🗣️ dialogue
+- **Image placeholder**: `[🖼️ 待生成]` — replaced with real keyframe after aivp-image runs
+- **Group shots by scene** with scene headers
+
+Save preview to `storyboard/preview-v{N}.md` (working) and `storyboard-final/preview.md` (final).
+
+Present the preview to user. Collect feedback → revise → next round.
+
+**User can say things like:**
+- "第 3 个镜头换成正面"
+- "这里加一句台词"
+- "场景二太长了，砍两个镜头"
+- "整体节奏太慢"
+
+Map user feedback back to technical specs (shots/*.md) and regenerate both preview and specs.
 
 ### Final: Lock
 
 When approved → save all to `storyboard/storyboard-final/` directory:
-- `storyboard-final/storyboard.md` — complete storyboard document
+- `storyboard-final/preview.md` — **user-facing visual storyboard** (plain language, with image placeholders)
+- `storyboard-final/storyboard.md` — complete technical storyboard (for pipeline)
 - `storyboard-final/camera-tree.md` — finalized camera tree
 - `storyboard-final/frame-plan.md` — finalized generation plan
 - `storyboard-final/shots/shot-{NN}.md` — per-shot production specs
@@ -147,14 +167,16 @@ project/storyboard/
 ├── plan.md                          ← PLAN: track progress + decisions
 ├── notes/                           ← NOTES: revision feedback
 │   └── round-1.md
-├── camera-tree.md                   ← Working camera tree
-├── frame-plan.md                    ← Working frame generation plan
-├── shots/                           ← Per-shot specs (working)
+├── preview-v1.md                    ← USER-FACING: visual storyboard (working)
+├── camera-tree.md                   ← INTERNAL: camera hierarchy
+├── frame-plan.md                    ← INTERNAL: generation order
+├── shots/                           ← INTERNAL: per-shot technical specs
 │   ├── shot-01.md
 │   └── shot-02.md
-├── storyboard-v1.md                 ← Working version
+├── storyboard-v1.md                 ← INTERNAL: technical storyboard (working)
 └── storyboard-final/                ← DELIVERABLE: approved output
-    ├── storyboard.md
+    ├── preview.md                   ← For user review & future reference
+    ├── storyboard.md                ← For pipeline (aivp-image/video/audio)
     ├── camera-tree.md
     ├── frame-plan.md
     └── shots/
@@ -162,11 +184,11 @@ project/storyboard/
         └── shot-02.md
 ```
 
-| Layer | Files | Purpose |
-|-------|-------|---------|
-| Plan | `plan.md` | Track rounds, decisions, revision notes |
-| Notes | `notes/*.md` | Quality check results, user feedback |
-| Deliverables | `storyboard-final/` | Complete production specs for downstream |
+| Layer | Files | Audience |
+|-------|-------|----------|
+| Plan | `plan.md` | Agent internal — track rounds, decisions |
+| User Preview | `preview-v{N}.md` → `preview.md` | **User** — visual storyboard in plain language |
+| Technical | `storyboard-v{N}.md`, `shots/`, `camera-tree.md`, `frame-plan.md` | Pipeline — aivp-image/video/audio reads these |
 
 ## References (load as needed)
 
@@ -178,6 +200,7 @@ project/storyboard/
 - **Seedance 2.0 guide** → `references/seedance2-guide.md` — Seedance 2.0 专用分镜格式、运镜关键词、八大铁律、@素材引用、shot spec→提示词转换
 - **Visual continuity** → `references/visual-continuity.md` — Cross-shot consistency checks, character tracking, environment consistency
 - **Quality checks** → `references/quality-checks.md` — Storyboard-specific validation checklist
+- **Preview template** → `assets/preview-template.md` — User-facing visual storyboard format (plain language, emoji markers, image placeholders)
 
 ## Integration
 
