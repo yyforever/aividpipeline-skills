@@ -3,18 +3,19 @@ name: aivp-video
 description: Generate AI video clips from text or images using multiple providers (fal.ai, Replicate, local). Use when the user requests "Generate video", "Text to video", "Image to video", "Animate this image", "Create a video clip", or similar video generation tasks.
 metadata:
   author: aividpipeline
-  version: "0.2.0"
-  tags: video, ai-video, text-to-video, image-to-video, seedance, kling, sora
+  version: "0.3.0"
+  tags: video, ai-video, text-to-video, image-to-video, seedance, kling, sora, multi-shot
 ---
 
 # AIVP Video — AI Video Clip Generation
 
 Generate video clips using state-of-the-art AI models. Supports text-to-video, image-to-video, and video-to-video workflows with queue-based async execution.
 
-Supports two modes:
+Supports three modes:
 
-1. **Pipeline mode** — read storyboard + image outputs and generate all shot clips in order
-2. **Standalone mode** — generate a single clip from prompt or image
+1. **Pipeline mode (single-shot)** — read storyboard + image outputs, generate clips one shot at a time
+2. **Pipeline mode (multi-shot)** — group shots and generate via Kling O3 multi-shot API (up to 6 shots per call)
+3. **Standalone mode** — generate a single clip from prompt or image
 
 ## Core Process
 
@@ -23,12 +24,13 @@ Read storyboard outputs (frame-plan.md + shots/*.md)
      ↓
 Read image outputs (frames/*.png + characters/*.png)
      ↓
-For each shot in generation order:
-     ├─ Choose mode (I2V preferred, T2V fallback)
-     ├─ Call generate.sh (queue submit + poll)
-     ├─ Save clip to video/clips/
-     ├─ Log metadata to video/log/
-     └─ Update video/plan.md status
+Choose generation strategy:
+     ├─ Single-shot (default): one API call per shot
+     │   └─ For each shot: choose mode (I2V/T2V) → generate.sh → save clip
+     └─ Multi-shot (Kling O3): group shots → one API call per group
+         └─ For each group (≤6 shots): build multi-shot payload → generate.sh → split/save clips
+     ↓
+Save clips to video/clips/, log to video/log/
      ↓
 All clips generated → quality review → handoff to edit/lipsync
 ```
@@ -42,9 +44,11 @@ All clips generated → quality review → handoff to edit/lipsync
    - `.env` file in project root, `~/.env`, or `~/.aivp/.env`
 2. **Read upstream outputs** (pipeline mode):
    - `storyboard/storyboard-final/frame-plan.md` — shot order + generation notes
-   - `storyboard/storyboard-final/shots/shot-{NN}.md` — per-shot prompt, duration, camera, resolution
+   - `storyboard/storyboard-final/shots/shot-{NN}.md` — per-shot specs with **dual-format prompts**:
+     - `Motion prompt (Seedance 2.0 format)` — Chinese time-axis format (primary)
+     - `Motion prompt (Kling 3.0 format)` — English format with camera tags (fallback)
    - `image/frames/*.png` — keyframe inputs for I2V mode
-   - `image/characters/*.png` — character reference anchors
+   - `image/characters/*.png` — character reference anchors (for element referencing)
    - `script/characters/*.md` and `script/scenes/*.md` — character/scene context for prompt refinement
 3. **Create `video/plan.md`** — track generation progress with this table format:
 
@@ -63,8 +67,12 @@ For each shot:
 - Resolve model + mode using pipeline strategy:
   - If keyframe exists in `image/frames/` → use **I2V** (preferred, more consistent)
   - If no keyframe exists → fallback to **T2V**
-  - Default pipeline model: `fal-ai/bytedance/seedance/v1.5/pro` (best value, native audio)
-  - Hero shots / final render: upgrade to `fal-ai/kling-video/v2.6/pro/*` or `fal-ai/veo3.1`
+  - **Default model:** `fal-ai/bytedance/seedance/v1.5/pro` (best value with native audio, ~$0.05/s)
+  - **Character consistency needed:** `fal-ai/kling-video/o3/pro/*` (element referencing, ~$0.34/s)
+  - **Hero / final render:** `fal-ai/veo3.1` ($0.40/s) or `fal-ai/kling-video/v3/pro/*` ($0.34/s)
+  - **Fast iteration:** `fal-ai/kling-video/v2.5-turbo/pro` ($0.07/s, still available)
+  - Use Seedance 2.0 format prompt from storyboard when using Seedance models
+  - Use Kling 3.0 format prompt from storyboard when using Kling models
 
 ### Step 2: Generate Clips in Order
 
@@ -89,6 +97,33 @@ After each shot:
 - Verify clip saved to `video/clips/shot-{NN}.mp4`
 - Save request/result metadata to `video/log/shot-{NN}.json`
 - Update `video/plan.md` status (`pending` → `queued` → `done` / `failed`)
+
+### Step 2b: Multi-Shot Mode (Kling O3/V3 — Optional)
+
+When character consistency across shots is critical, use Kling 3.0 multi-shot instead of shot-by-shot:
+
+1. **Group shots** from the storyboard (max 6 per group):
+   - Same scene → same group
+   - Dialogue sequences → same group
+   - Don't cross scene boundaries within a group
+2. **Build multi-shot payload** using Kling 3.0 format prompts from `shots/*.md`:
+   ```bash
+   bash scripts/generate.sh \
+     --model "fal-ai/kling-video/o3/pro/text-to-video" \
+     --prompt "Master: Kitchen, early morning, warm golden light." \
+     --multi-shot '[
+       {"prompt": "Medium shot, woman sets plate. [Elena]: \"You never listen.\"", "duration": "5"},
+       {"prompt": "Close-up reaction. [Marco]: \"Stop blaming!\"", "duration": "4"}
+     ]' \
+     --element "image/characters/elena-front.png:Elena" \
+     --output "video/clips/group-01.mp4"
+   ```
+3. **Split group output** into individual shot clips if needed for downstream editing
+4. Log the group as a single entry in `video/log/group-{NN}.json`
+
+> **When to use multi-shot:** Dialogue-heavy scenes with 2+ characters who must stay consistent. For simple shots or fast iteration, single-shot mode is cheaper and faster.
+
+> **Cost warning:** Kling O3 Pro is ~$0.34/s with audio — a 15s multi-shot group costs ~$5. Use Seedance 1.5 for iteration, Kling O3 for final renders.
 
 ### Step 3: Log Metadata
 
@@ -246,39 +281,104 @@ bash scripts/generate.sh --result "abc123" --model "fal-ai/veo3.1"
 | `--output`, `-o` | Save video to local path | - |
 | `--schema [MODEL]` | Get OpenAPI schema | - |
 
-## Recommended Models
+## Recommended Models (2026-02 Updated)
 
 ### Text-to-Video
 
-| Model | Speed | Quality | Pricing (参考) | Notes |
-|-------|:-----:|:-------:|:-------------:|-------|
-| `fal-ai/bytedance/seedance/v1.5/pro` | ⚡⚡ | ★★★★ | ~$0.05/s (720p+audio) | **Default** — native audio, lip-sync |
-| `fal-ai/veo3.1` | ⚡ | ★★★★★ | $0.20-0.40/s | Highest quality, 4K support |
-| `fal-ai/sora-2/text-to-video/pro` | ⚡ | ★★★★★ | $0.30-0.50/s | Up to 25s, native audio |
-| `fal-ai/kling-video/v2.5-turbo/pro` | ⚡⚡⚡ | ★★★ | ~$0.07/s | Fastest generation |
-| `fal-ai/minimax/hailuo-02/pro` | ⚡⚡ | ★★★★ | $0.08/s (1080p) | Best physics, director camera |
-| `fal-ai/bytedance/seedance/v1/pro` | ⚡⚡ | ★★★ | ~$0.02/s (720p) | Budget option |
+| Model | Speed | Quality | $/s (audio) | Notes |
+|-------|:-----:|:-------:|:-----------:|-------|
+| `fal-ai/bytedance/seedance/v1.5/pro` | ⚡⚡ | ★★★★ | ~$0.05 | **Default** — best value with audio |
+| `fal-ai/kling-video/o3/pro/text-to-video` | ⚡ | ★★★★★ | ~$0.34 | **Multi-shot + element ref + voice** |
+| `fal-ai/kling-video/v3/pro/text-to-video` | ⚡ | ★★★★★ | ~$0.34 | Multi-shot, prompt-driven cinematic |
+| `fal-ai/veo3.1` | ⚡ | ★★★★★ | $0.40 | Highest quality, 4K support |
+| `fal-ai/sora-2/text-to-video/pro` | ⚡ | ★★★★★ | $0.50 | Up to 25s, native audio |
+| `fal-ai/kling-video/v2.5-turbo/pro` | ⚡⚡⚡ | ★★★ | ~$0.07 | **Fastest** — good for iteration |
+| `fal-ai/minimax/hailuo-02/pro` | ⚡⚡ | ★★★★ | $0.08 | Best physics, director camera |
+| `fal-ai/bytedance/seedance/v1/pro` | ⚡⚡ | ★★★ | ~$0.02 | Budget option |
 
 ### Image-to-Video
 
-| Model | Speed | Quality | Pricing (参考) | Notes |
-|-------|:-----:|:-------:|:-------------:|-------|
-| `fal-ai/kling-video/v2.6/pro/image-to-video` | ⚡⚡ | ★★★★★ | $0.07-0.14/s | **Best I2V** — native audio |
-| `fal-ai/veo3.1/fast/image-to-video` | ⚡⚡⚡ | ★★★★ | ~$0.10/s | Fast, high quality |
-| `fal-ai/bytedance/seedance/v1.5/pro/image-to-video` | ⚡⚡ | ★★★★ | ~$0.05/s (720p+audio) | Start+end frame, lip-sync |
-| `fal-ai/minimax/hailuo-02/standard/image-to-video` | ⚡⚡ | ★★★ | ~$0.017/s (512p) | Budget I2V |
+| Model | Speed | Quality | $/s (audio) | Notes |
+|-------|:-----:|:-------:|:-----------:|-------|
+| `fal-ai/kling-video/v3/pro/image-to-video` | ⚡ | ★★★★★ | ~$0.34 | **Best I2V** — 3.0 quality |
+| `fal-ai/kling-video/v2.6/pro/image-to-video` | ⚡⚡ | ★★★★ | $0.14 | Good I2V, cheaper than v3 |
+| `fal-ai/veo3.1/fast/image-to-video` | ⚡⚡⚡ | ★★★★ | ~$0.10 | Fast, high quality |
+| `fal-ai/bytedance/seedance/v1.5/pro/image-to-video` | ⚡⚡ | ★★★★ | ~$0.05 | Start+end frame, lip-sync |
+| `fal-ai/minimax/hailuo-02/standard/image-to-video` | ⚡⚡ | ★★★ | ~$0.017 | Budget I2V |
 
-### Video-to-Video (Style Transfer)
+### Reference-to-Video (Character Consistency)
+
+| Model | Notes |
+|-------|-------|
+| `fal-ai/kling-video/o3/pro/reference-to-video` | Upload character image/video → consistent across shots, $0.34/s |
+| `fal-ai/kling-video/o3/standard/reference-to-video` | Same but standard tier, $0.22/s |
+
+### Video-to-Video (Style Transfer / Editing)
 
 | Model | Notes |
 |-------|-------|
 | `fal-ai/kling-video/v2.6/pro/video-to-video` | Style transfer, motion retargeting — $0.112/s |
 
+### Generation Strategy
+
+| Scenario | Model | Why |
+|----------|-------|-----|
+| Fast iteration / previews | Seedance 1.5 Pro or Kling 2.5 Turbo | Cheap ($0.02-0.07/s) |
+| Standard pipeline run | Seedance 1.5 Pro | Best value + audio ($0.05/s) |
+| Character consistency needed | Kling O3 Pro (multi-shot) | Element referencing |
+| Hero shots / final render | Kling V3 Pro or Veo 3.1 | Top quality |
+| Longest single clip (25s) | Sora 2 Pro | Only model with 25s |
+| Seedance 2.0 (when on fal.ai) | TBD | Multi-modal ref, 2K, 15s |
+
 ---
 
 ## Detailed Model Documentation
 
-### 🎬 Seedance v1.5 Pro (Default)
+### 🆕 Kling 3.0 / O3 (Feb 2026 — Character Consistency + Multi-Shot)
+
+**See:** `references/kling3-api.md` for full API details.
+
+**Key capabilities vs 2.x:**
+- Multi-shot storyboard (up to 6 shots, each with own prompt/duration, max 15s total)
+- Element referencing (upload character images → consistent across shots)
+- Multi-character coreference (3+ characters stay distinct)
+- Video element referencing (O3 only — 3-8s video → extracts appearance + voice)
+- Voice binding (O3 only — consistent voices across generations)
+- Native audio in 5 languages (CN/EN/JA/KO/ES)
+- Much better fast motion and acting quality
+
+**Pipeline integration:**
+- Read Kling 3.0 format prompts from `storyboard/storyboard-final/shots/*.md`
+- Upload `image/characters/*.png` as element references
+- Group shots by scene for multi-shot generation
+
+**When to use:** Dialogue-heavy scenes, multi-character consistency, final renders.
+**When NOT to use:** Fast iteration (too expensive), simple single-shot clips.
+
+### 🆕 Seedance 2.0 (Feb 2026 — Multi-Modal Reference)
+
+**See:** `references/seedance2-api.md` for full API details.
+
+**Key capabilities vs 1.5:**
+- Multi-modal reference (up to 12 files: 9 images + 3 videos + 3 audio)
+- @ syntax to assign asset roles (`@Image1 as character`, `@Video1 for camera`)
+- 2K resolution output (vs 1080p max on 1.5)
+- 4-15 seconds duration (vs 4-12 on 1.5)
+- Motion/camera/editing rhythm replication from reference videos
+- One-take continuity for long unbroken shots
+
+**fal.ai availability:** ⏳ Not yet on fal.ai (still 1.5 as of 2026-02-27). Available via ByteDance official API and proxies.
+
+**Pipeline integration:**
+- Read Seedance 2.0 format (Chinese time-axis) prompts from storyboard
+- Use `image/characters/*.png` as @ references
+- Use `image/frames/*.png` as first frame references
+
+**When to use:** Once available on fal.ai — replaces 1.5 as default pipeline model.
+
+---
+
+### 🎬 Seedance v1.5 Pro (Current Default)
 
 **Model IDs:**
 - T2V: `fal-ai/bytedance/seedance/v1.5/pro/text-to-video`
@@ -373,7 +473,7 @@ bash scripts/generate.sh --result "abc123" --model "fal-ai/veo3.1"
 
 ---
 
-### 🎥 Kling v2.6 Pro (Best I2V)
+### 🎥 Kling v2.6 Pro (Previous Gen — Budget I2V)
 
 **Model IDs:**
 - T2V: `fal-ai/kling-video/v2.6/pro/text-to-video`
@@ -590,44 +690,48 @@ bash scripts/generate.sh --result "abc123" --model "fal-ai/veo3.1"
 ```
                         Need video generation?
                                │
-                    ┌──────────┴──────────┐
-                    │                     │
-              Text-to-Video          Image-to-Video
-                    │                     │
-            ┌───────┴───────┐      ┌──────┴──────┐
-            │               │      │             │
-       Need audio?     No audio   Best quality?  Budget?
-            │               │      │             │
-     ┌──────┴──────┐   Fast iter   Kling 2.6    Hailuo Std
-     │             │   Kling 2.5t   Pro I2V      I2V
-  Best quality?  Budget?  ($0.07)  ($0.07-0.14)  ($0.017)
-     │             │
-  ┌──┴──┐    Seedance
-  │     │    v1.5 Pro
-Sora 2  Veo 3.1  ($0.05)
-($0.50) ($0.40)
+              ┌────────────────┼────────────────┐
+              │                │                │
+        Single Shot      Multi-Shot       Reference-based
+              │          (Kling O3/V3)    (Kling O3 ref)
+              │                │                │
+        ┌─────┴─────┐    Need character    Upload char image
+        │           │     consistency?     → consistent across
+   Has keyframe?  T2V     Yes → O3 Pro       all generations
+        │           │     No → V3 Std
+       I2V     ┌───┴───┐
+        │      │       │
+   ┌────┴──┐  Budget?  Premium?
+   │       │    │        │
+ Seedance Kling Seedance  Veo 3.1
+  1.5 I2V v3 I2V 1.5 Pro ($0.40)
+ ($0.05) ($0.34) ($0.05)
 ```
 
 **Quick Decision:**
-- 🎬 **Cinematic / hero shots** → `veo3.1` ($0.40/s) or `sora-2/pro` ($0.50/s)
-- ⚡ **Fast iteration / previews** → `kling-video/v2.5-turbo/pro` ($0.07/s)
-- 🧑 **Characters + physics** → `minimax/hailuo-02/pro` ($0.08/s)
-- 🖼️ **Best I2V** → `kling-video/v2.6/pro/image-to-video` ($0.07-0.14/s)
-- 🎵 **Video with audio (budget)** → `seedance/v1.5/pro` (~$0.05/s)
-- 🎵 **Video with audio (premium)** → `sora-2/pro` ($0.30-0.50/s)
-- 💰 **Cheapest** → `seedance/v1/pro` (~$0.02/s) or `hailuo-02/standard` ($0.045/s)
-- ⏱️ **Longest duration (25s)** → `sora-2/pro` only
-- 📺 **4K output** → `veo3.1` only
+- 🎬 **Cinematic / hero shots** → Kling V3 Pro ($0.34/s) or Veo 3.1 ($0.40/s)
+- 👥 **Character consistency (multi-shot)** → Kling O3 Pro ($0.34/s) — **new**
+- ⚡ **Fast iteration / previews** → Kling 2.5 Turbo ($0.07/s) or Seedance v1 ($0.02/s)
+- 🖼️ **Best I2V** → Kling V3 Pro I2V ($0.34/s) or v2.6 Pro I2V ($0.14/s, cheaper)
+- 🎵 **Video with audio (budget)** → Seedance 1.5 Pro (~$0.05/s)
+- 🎵 **Video with audio (premium)** → Sora 2 Pro ($0.50/s)
+- 💰 **Cheapest** → Seedance v1 Pro (~$0.02/s) or Hailuo Standard ($0.045/s)
+- ⏱️ **Longest single clip (25s)** → Sora 2 Pro only
+- 📺 **4K output** → Veo 3.1 only
+- 🔮 **Seedance 2.0** (when on fal.ai) → multi-modal ref, 2K, 15s
 
 ### Pipeline Mode Model Strategy
 
-| Condition | Mode | Recommended Model |
-|-----------|------|-------------------|
-| `image/frames/shot-{NN}-ff.png` exists | I2V (preferred) | `fal-ai/bytedance/seedance/v1.5/pro/image-to-video` |
-| No keyframe available | T2V fallback | `fal-ai/bytedance/seedance/v1.5/pro/text-to-video` |
-| Hero shot / final render | I2V or T2V | `fal-ai/kling-video/v2.6/pro/*` or `fal-ai/veo3.1` |
+| Scenario | Mode | Model | $/s |
+|----------|------|-------|:---:|
+| Standard shot with keyframe | I2V | Seedance 1.5 Pro I2V | ~$0.05 |
+| Standard shot without keyframe | T2V | Seedance 1.5 Pro T2V | ~$0.05 |
+| Dialogue scene, 2+ characters | Multi-shot | Kling O3 Pro | ~$0.34 |
+| Hero / final render | I2V or T2V | Kling V3 Pro or Veo 3.1 | $0.34-0.40 |
+| Fast iteration / test | T2V | Kling 2.5 Turbo or Seedance v1 | $0.02-0.07 |
 
-Pipeline default is **Seedance v1.5 Pro** for cost/performance + native audio. Upgrade only selected shots to Kling 2.6 or Veo 3.1 when quality target requires it.
+**Default pipeline model:** Seedance 1.5 Pro (best value + native audio).
+**Upgrade path:** Seedance for most shots → Kling O3 for character-heavy scenes → Veo 3.1 for hero shots.
 
 ## Best Practices
 
@@ -638,7 +742,10 @@ Pipeline default is **Seedance v1.5 Pro** for cost/performance + native audio. U
 5. **Resolution strategy**: Generate at 480p/720p for testing, 1080p+ for final
 6. **Audio toggle**: Set `generate_audio: false` to halve Seedance costs when audio not needed
 7. **I2V over T2V**: When you have keyframes, I2V gives more control over appearance
-8. **Budget workflow**: Seedance v1 Pro Fast → test → upgrade to v1.5 Pro or Kling 2.6 for final
+8. **Budget workflow**: Seedance v1 Pro → test → upgrade to v1.5 Pro or Kling V3 for final
+9. **Multi-shot grouping**: Group by scene, max 6 shots, same characters → Kling O3
+10. **Element referencing**: Upload character portraits from `image/characters/` as elements for Kling O3
+11. **Dual-format prompts**: Storyboard provides both Seedance 2.0 and Kling 3.0 formats — use the matching one for your chosen model
 
 ## Integration with AIVP Pipeline
 
@@ -652,10 +759,11 @@ aivp-storyboard → aivp-image (keyframes) → aivp-video (clips) → aivp-edit
 
 **Input from:** `aivp-storyboard` →
 - `storyboard/storyboard-final/frame-plan.md` — shot order and generation dependencies
-- `storyboard/storyboard-final/shots/*.md` — per-shot prompt/camera/duration specs
+- `storyboard/storyboard-final/shots/*.md` — per-shot specs with **dual-format prompts** (Seedance 2.0 + Kling 3.0)
 
 **Input from:** `aivp-image` →
 - `image/frames/*.png` — keyframes for I2V mode
+- `image/characters/*.png` — character portraits for element referencing (Kling O3)
 - `image/characters/*.png` — character references for consistency
 
 **Input from:** `aivp-script` →
@@ -683,6 +791,12 @@ project/video/
 ```
 
 Each skill reads from upstream sibling directories and writes only to its own directory. `aivp-video` reads `script/`, `storyboard/`, and `image/`, and writes only to `video/`.
+
+## References (load as needed)
+
+- **Kling 3.0 / O3 API** → `references/kling3-api.md` — Endpoints, multi-shot, element referencing, pricing
+- **Seedance 2.0 API** → `references/seedance2-api.md` — Multi-modal reference, @ syntax, 1.5 vs 2.0 comparison
+- **fal.ai Queue API** → `references/fal-queue-api.md` — Queue flow, file upload, authentication, error handling
 
 ## Output
 
