@@ -3,13 +3,134 @@ name: aivp-video
 description: Generate AI video clips from text or images using multiple providers (fal.ai, Replicate, local). Use when the user requests "Generate video", "Text to video", "Image to video", "Animate this image", "Create a video clip", or similar video generation tasks.
 metadata:
   author: aividpipeline
-  version: "0.1.0"
+  version: "0.2.0"
   tags: video, ai-video, text-to-video, image-to-video, seedance, kling, sora
 ---
 
 # AIVP Video — AI Video Clip Generation
 
 Generate video clips using state-of-the-art AI models. Supports text-to-video, image-to-video, and video-to-video workflows with queue-based async execution.
+
+Supports two modes:
+
+1. **Pipeline mode** — read storyboard + image outputs and generate all shot clips in order
+2. **Standalone mode** — generate a single clip from prompt or image
+
+## Core Process
+
+```
+Read storyboard outputs (frame-plan.md + shots/*.md)
+     ↓
+Read image outputs (frames/*.png + characters/*.png)
+     ↓
+For each shot in generation order:
+     ├─ Choose mode (I2V preferred, T2V fallback)
+     ├─ Call generate.sh (queue submit + poll)
+     ├─ Save clip to video/clips/
+     ├─ Log metadata to video/log/
+     └─ Update video/plan.md status
+     ↓
+All clips generated → quality review → handoff to edit/lipsync
+```
+
+## Workflow
+
+### Setup
+
+1. **Locate API key** — Check these in order:
+   - `FAL_KEY` environment variable
+   - `.env` file in project root, `~/.env`, or `~/.aivp/.env`
+2. **Read upstream outputs** (pipeline mode):
+   - `storyboard/storyboard-final/frame-plan.md` — shot order + generation notes
+   - `storyboard/storyboard-final/shots/shot-{NN}.md` — per-shot prompt, duration, camera, resolution
+   - `image/frames/*.png` — keyframe inputs for I2V mode
+   - `image/characters/*.png` — character reference anchors
+   - `script/characters/*.md` and `script/scenes/*.md` — character/scene context for prompt refinement
+3. **Create `video/plan.md`** — track generation progress with this table format:
+
+| # | Type | File | Model | Mode | Status |
+|---|------|------|-------|------|--------|
+| 1 | shot-01 | `video/clips/shot-01.mp4` | `fal-ai/bytedance/seedance/v1.5/pro/image-to-video` | I2V | queued |
+| 2 | shot-02 | `video/clips/shot-02.mp4` | `fal-ai/bytedance/seedance/v1.5/pro/text-to-video` | T2V | pending |
+
+### Step 1: Build Shot Queue
+
+From `frame-plan.md` + `shots/*.md`, create an ordered queue (`shot-01`, `shot-02`, ...).
+
+For each shot:
+- Determine keyframe availability: check `image/frames/shot-{NN}-ff.png` (and `shot-{NN}-lf.png` if needed)
+- Pull character refs from `image/characters/*.png` for identity consistency
+- Resolve model + mode using pipeline strategy:
+  - If keyframe exists in `image/frames/` → use **I2V** (preferred, more consistent)
+  - If no keyframe exists → fallback to **T2V**
+  - Default pipeline model: `fal-ai/bytedance/seedance/v1.5/pro` (best value, native audio)
+  - Hero shots / final render: upgrade to `fal-ai/kling-video/v2.6/pro/*` or `fal-ai/veo3.1`
+
+### Step 2: Generate Clips in Order
+
+Run generation shot-by-shot in queue order:
+
+```bash
+# I2V preferred when keyframe exists
+bash scripts/generate.sh \
+  --prompt "Shot 01 action/camera/sound..." \
+  --model "fal-ai/bytedance/seedance/v1.5/pro/image-to-video" \
+  --file "image/frames/shot-01-ff.png" \
+  --output "video/clips/shot-01.mp4"
+
+# T2V fallback when no keyframe exists
+bash scripts/generate.sh \
+  --prompt "Shot 02 action/camera/sound..." \
+  --model "fal-ai/bytedance/seedance/v1.5/pro/text-to-video" \
+  --output "video/clips/shot-02.mp4"
+```
+
+After each shot:
+- Verify clip saved to `video/clips/shot-{NN}.mp4`
+- Save request/result metadata to `video/log/shot-{NN}.json`
+- Update `video/plan.md` status (`pending` → `queued` → `done` / `failed`)
+
+### Step 3: Log Metadata
+
+Use one JSON log per clip (`video/log/shot-{NN}.json`) in this shared pipeline format:
+
+```json
+{
+  "id": "shot-01",
+  "type": "clip",
+  "file": "video/clips/shot-01.mp4",
+  "model": "fal-ai/bytedance/seedance/v1.5/pro/image-to-video",
+  "mode": "I2V",
+  "status": "completed",
+  "request_id": "abc123-def456",
+  "prompt": "Camera pushes in as Elena turns to Marco and says \"We have one chance.\"",
+  "seed": 42,
+  "duration": "5",
+  "aspect_ratio": "16:9",
+  "input_image": "image/frames/shot-01-ff.png",
+  "character_refs": [
+    "image/characters/elena-front.png",
+    "image/characters/marco-front.png"
+  ],
+  "video_url": "https://v3.fal.media/files/.../shot-01.mp4",
+  "cost_usd": 0.26,
+  "timestamp": "2026-02-27T12:00:00Z"
+}
+```
+
+### Step 4: Quality Review
+
+After all clips are generated:
+1. Check character consistency against `image/characters/*.png`
+2. Check shot continuity against `storyboard/storyboard-final/shots/*.md`
+3. Check motion/camera intent matches shot specs
+4. Check audio quality and dialogue clarity (when audio enabled)
+5. Mark failed clips in `video/plan.md` and regenerate only failed shots
+
+### Step 5: Handoff
+
+- For assembly: pass completed clips in `video/clips/` to `aivp-edit`
+- For talking-shot enhancement: pass selected clips to `aivp-lipsync`
 
 ## Scripts
 
@@ -67,7 +188,7 @@ bash scripts/generate.sh \
 bash scripts/generate.sh \
   --prompt "The character turns and smiles" \
   --model "fal-ai/bytedance/seedance/v1.5/pro/image-to-video" \
-  --file "./keyframes/scene_01.png"
+  --file "./image/frames/shot-01-ff.png"
 ```
 
 ### Async Mode (Long Jobs)
@@ -498,6 +619,16 @@ Sora 2  Veo 3.1  ($0.05)
 - ⏱️ **Longest duration (25s)** → `sora-2/pro` only
 - 📺 **4K output** → `veo3.1` only
 
+### Pipeline Mode Model Strategy
+
+| Condition | Mode | Recommended Model |
+|-----------|------|-------------------|
+| `image/frames/shot-{NN}-ff.png` exists | I2V (preferred) | `fal-ai/bytedance/seedance/v1.5/pro/image-to-video` |
+| No keyframe available | T2V fallback | `fal-ai/bytedance/seedance/v1.5/pro/text-to-video` |
+| Hero shot / final render | I2V or T2V | `fal-ai/kling-video/v2.6/pro/*` or `fal-ai/veo3.1` |
+
+Pipeline default is **Seedance v1.5 Pro** for cost/performance + native audio. Upgrade only selected shots to Kling 2.6 or Veo 3.1 when quality target requires it.
+
 ## Best Practices
 
 1. **Prompt Structure**: Scene → Action → Dialogue → Camera → Sound/Foley
@@ -511,33 +642,47 @@ Sora 2  Veo 3.1  ($0.05)
 
 ## Integration with AIVP Pipeline
 
-This skill is typically called after `aivp-storyboard` and `aivp-image`:
+This skill is typically called after `aivp-storyboard` and `aivp-image`, and before edit/lipsync:
 
 ```
-aivp-storyboard → aivp-image (keyframes) → aivp-video (animate)
-                                          ↗
-                              aivp-script (prompt text)
+aivp-storyboard → aivp-image (keyframes) → aivp-video (clips) → aivp-edit
+                                          ↗                     ↘
+                              aivp-script (prompt text)      aivp-lipsync
 ```
+
+**Input from:** `aivp-storyboard` →
+- `storyboard/storyboard-final/frame-plan.md` — shot order and generation dependencies
+- `storyboard/storyboard-final/shots/*.md` — per-shot prompt/camera/duration specs
+
+**Input from:** `aivp-image` →
+- `image/frames/*.png` — keyframes for I2V mode
+- `image/characters/*.png` — character references for consistency
+
+**Input from:** `aivp-script` →
+- `script/characters/*.md` — identity and appearance constraints
+- `script/scenes/*.md` — scene mood/environment language
+
+**Output to:**
+- `aivp-edit` → `video/clips/*.mp4` for timeline assembly
+- `aivp-lipsync` → selected clips requiring speech-driven mouth sync
 
 ### Project Directory Convention
 
-When used within a pipeline project, videos are saved to:
+When used within a pipeline project, this skill writes to:
 
 ```
-project/
-├── storyboard.json       ← from aivp-storyboard
-├── keyframes/
-│   ├── scene_01.png      ← from aivp-image
-│   ├── scene_02.png
+project/video/
+├── plan.md          ← Track generation progress (same format as image/plan.md)
+├── clips/           ← Generated video clips
+│   ├── shot-01.mp4
+│   ├── shot-02.mp4
 │   └── ...
-├── clips/
-│   ├── scene_01.mp4      ← generated by aivp-video
-│   ├── scene_02.mp4
-│   └── ...
-└── metadata/
-    ├── scene_01.json     ← generation params + request_id
-    └── scene_02.json
+└── log/             ← Generation metadata
+    ├── shot-01.json
+    └── ...
 ```
+
+Each skill reads from upstream sibling directories and writes only to its own directory. `aivp-video` reads `script/`, `storyboard/`, and `image/`, and writes only to `video/`.
 
 ## Output
 
